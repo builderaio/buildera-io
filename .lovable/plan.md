@@ -1,161 +1,103 @@
 
 
-# Auditoría UX Integral - Buildera Platform
+# Fallas Pendientes en la Plataforma Buildera
 
-## Resumen Ejecutivo
-
-Tras revisar exhaustivamente el código de la plataforma (40+ archivos, rutas, componentes, navegación, i18n, y flujo del journey), he identificado **23 brechas críticas** organizadas por severidad y fase del journey.
+Tras revisar el estado actual del código post-correcciones, identifico las siguientes fallas que aún persisten organizadas por prioridad.
 
 ---
 
-## BRECHAS ENCONTRADAS
+## FALLAS ACTIVAS
 
-### SEVERIDAD ALTA - Rompen experiencia o bloquean funcionalidad
+### 1. PrivacyPolicy.tsx y TermsOfService.tsx -- i18n NO aplicado al contenido
+- Se agregó `useTranslation` y `bg-background`, pero **todo el contenido sigue hardcodeado en español**
+- "Volver a Inicio", "Política de Privacidad y Seguridad", "Última actualización: Enero 2025", "Términos de Servicio", etc.
+- No se crearon archivos `legal.json` de traducción
+- **Archivos**: `PrivacyPolicy.tsx`, `TermsOfService.tsx`
 
-**1. Página 404 sin i18n, sin diseño de marca, sin tema**
-- `NotFound.tsx`: Texto hardcodeado en inglés ("Oops! Page not found", "Return to Home")
-- Usa `bg-gray-100` (no respeta dark mode)
-- Sin Header/Footer, sin branding Buildera
-- Impacto: cualquier URL errónea muestra una pantalla ajena a la marca
+### 2. Toasts hardcodeados `title: "Error"` -- 445 instancias en 37 archivos
+- La corrección masiva nunca se ejecutó
+- Archivos más críticos: `SimpleContentPublisher.tsx`, `ContentCreatorHub.tsx`, `ContentLibraryTab.tsx`, `SocialConnectionManager.tsx`, `ResetPassword.tsx`, `InsightsManager.tsx`, `AgentBuilderWizard.tsx`
+- Descripciones también hardcodeadas en español (ej: "No se pudo eliminar el contenido")
 
-**2. Sidebar blocking logic inconsistente**
-- `shouldBlockNavigation` bloquea si `!onboardingComplete && company_name === 'Mi Negocio'`
-- Pero los items del sidebar se deshabilitan si `item.id !== "adn-empresa"`, mientras que `setActiveView` bloquea si `view !== "negocio"`
-- "adn-empresa" !== "negocio" -- el item con id `negocio` se muestra como disabled cuando debería ser el único habilitado
-- Resultado: usuario post-registro puede quedar atrapado sin poder navegar a ninguna sección
+### 3. Console.log en producción -- 20+ instancias en CompanyDashboard.tsx
+- `console.group('🔐 [CompanyDashboard] checkAuth')` y docenas de `console.log` con datos de sesión
+- Expone información del usuario (user_id, email, user_type) en la consola del navegador
+- **Archivo**: `CompanyDashboard.tsx`
 
-**3. Admin pages con textos hardcodeados en español**
-- `AdminCustomers.tsx`: "Gestión de Clientes", "Usuarios, empresas y suscripciones en un solo lugar"
-- `AdminAIConfig.tsx`: "Configuración IA", "Proveedores, modelos y configuraciones del sistema"
-- `AdminAgentPerformance.tsx`: "Rendimiento de Agentes"
-- `AdminDashboard.tsx`: "Clientes", "Constructor Agentes", "Rendimiento", "Sistema"
-- Viola requisito de i18n obligatorio
+### 4. CompleteProfile.tsx -- roles obsoletos "developer" y "expert" aún activos
+- Líneas 239-241: `<SelectItem value="developer">`, `<SelectItem value="expert">`
+- Ambos redirigen a `/company-dashboard` sin funcionalidad diferenciada
+- Formularios de developer (GitHub, skills) y expert (industry, expertise) aún visibles
+- **Archivo**: `CompleteProfile.tsx`
 
-**4. PrivacyPolicy.tsx y TermsOfService.tsx sin i18n**
-- Ambas páginas no usan `useTranslation`
-- Todo el contenido legal está hardcodeado en español
-- Usa `bg-gray-50` (no respeta dark mode)
-- Para una plataforma con 3 idiomas (ES/EN/PT), esto es una brecha legal y funcional
+### 5. "Configuración" en sidebar footer apunta a "negocio" (mismo destino que "Mi Negocio")
+- Línea 492 de ResponsiveLayout: `setActiveView('configuracion')` → se mapea a `negocio`
+- No existe vista de configuración de cuenta/suscripción separada
+- **Archivo**: `ResponsiveLayout.tsx`
 
-**5. UserProfile.tsx usa `bg-gray-50`, `bg-gray-100`, colores hardcodeados**
-- Loading y error states usan colores que no respetan el tema
-- `h-32 w-32` spinner es excesivamente grande (UI inconsistente)
-- `border-slate-800` no usa variables de tema
+### 6. Sidebar tagline "Marketing Autopilot" no refleja propuesta de valor
+- Línea 221: `t('common:sidebar.platformTagline', 'Marketing Autopilot')`
+- Buildera es una plataforma de "Empresa Autónoma", no solo marketing
 
-### SEVERIDAD MEDIA - Degradan la experiencia
+### 7. Contacto page sin formulario real
+- Solo renderiza `<FinalCTA />` -- un CTA genérico, no una página de contacto
+- **Archivo**: `Contacto.tsx`
 
-**6. Toasts con "Error" hardcodeado (74 archivos)**
-- Múltiples archivos usan `title: "Error"` en lugar de `t('common:status.error')`
-- `SimpleContentPublisher.tsx`: 6 instancias de `title: "Error"`
-- `ContentCreatorHub.tsx`: 3 instancias
-- `ContentLibraryTab.tsx`: "No se pudo eliminar el contenido" hardcodeado
-- `AuthMethodManager.tsx`: "Error desconocido" hardcodeado
-
-**7. ContentLibraryTab.tsx - Mensaje hardcodeado**
-- "Cargando tu biblioteca de contenidos..." sin i18n
-
-**8. Footer links rotos o sin destino**
-- "Sobre nosotros" (`href="#"`) - va a ningún lado
-- "Contacto" (`href="#"`) - va a ningún lado
-- "Admin" visible en el footer público - expone panel administrativo
-
-**9. CompleteProfile ofrece roles obsoletos**
-- Muestra opciones "developer" y "expert" en el selector de tipo de usuario
-- Según las rutas, `/expert-dashboard` y `/developer/*` redirigen a `/company-dashboard`
-- Estas opciones confunden al usuario y generan perfiles con tipos que no tienen funcionalidad diferenciada
-
-**10. Journey step 5 "Activación" sin contenido útil visible**
-- El sidebar muestra "Activación" en step 5, que renderiza `DepartmentActivationGuide`
-- Pero ese componente requiere que el usuario ya tenga departamentos desbloqueados
-- Si los departamentos ya están desbloqueados (step 5), la guía muestra pasos ya completados -- redundancia
-
-**11. Inconsistencia entre "Configuración" en sidebar footer y "Mi Negocio"**
-- El botón "Settings" del sidebar footer navega a `configuracion`, que se mapea a `negocio`
-- Mismo destino que "Mi Negocio" -- el usuario espera una pantalla de configuración de cuenta/suscripción, no el ADN empresarial
-
-**12. `SupportChatWidget` recibe `user={null}` siempre en App.tsx**
-- Línea 87: `<SupportChatWidget user={null} />` -- el widget nunca recibe el usuario autenticado
-- Impacto: el soporte no puede identificar al usuario
-
-### SEVERIDAD BAJA - Inconsistencias y polish
-
-**13. Header "aria-label" hardcodeado en español**
-- `aria-label="Inicio Buildera"` y `aria-label="Principal"` no usan i18n
-
-**14. Hero image alt text hardcodeado**
-- `alt="Transformación empresarial con IA"` sin i18n
-
-**15. Contacto page reutiliza FinalCTA**
-- `/contacto` simplemente renderiza `<FinalCTA />` -- no es una página de contacto real
-- Sin formulario de contacto, sin información de contacto directa
-
-**16. Pricing page sin contexto de funcionalidades**
-- Solo renderiza `<SubscriptionPlans />` sin comparativa de features, FAQ, o social proof
-
-**17. Doble check de auth en CompanyDashboard y ResponsiveLayout**
-- `ResponsiveLayout.tsx` hace `checkAuth()` con retry loop (6 intentos)
+### 8. Doble checkAuth redundante
+- `ResponsiveLayout.tsx` hace retry loop de 6 intentos para auth
 - `CompanyDashboard.tsx` hace su propio `checkAuth()` independiente
-- Redundancia que puede causar race conditions y retrasos de carga
-
-**18. Console.log/console.group proliferación en producción**
-- `CompanyDashboard.tsx`: 20+ `console.log` statements
-- `OnboardingOrchestrator.tsx`: múltiples `console.group/log`
-- Impacto en performance y leaks de información en producción
-
-**19. Sidebar "Marketing Autopilot" como tagline**
-- `t('common:sidebar.platformTagline', 'Marketing Autopilot')` -- el fallback no refleja la propuesta de valor completa de la plataforma (no es solo marketing)
-
-**20. InviteAccept muestra rol como "admin"/"member" sin traducción contextual**
-- El label del rol se muestra parcialmente traducido
-
-**21. El "activation-wizard" no tiene ruta en el sidebar**
-- Solo se accede automáticamente en post-onboarding (journeyStep <= 2)
-- Si el usuario navega fuera, no puede volver a acceder al wizard
-
-**22. Creatify Studio como ruta directa (`creatify-studio`) sin acceso desde sidebar**
-- Solo accesible internamente desde Marketing Hub
-- Si un usuario recibe un link directo, no hay sidebar item para orientarse
-
-**23. `LanguageSelector` oculto en mobile (header del dashboard)**
-- `<div className="hidden sm:block"><LanguageSelector /></div>` -- usuarios móviles no pueden cambiar idioma
+- Puede causar race conditions y carga lenta
 
 ---
 
 ## PLAN DE CORRECCIÓN
 
-### Fase 1: Críticos (Bloqueantes de UX)
+### Paso 1: Eliminar roles obsoletos de CompleteProfile
+- Remover opciones "developer" y "expert" del `<Select>`
+- Auto-setear `userType = 'company'` 
+- Eliminar formularios condicionales de developer/expert
+- **Archivo**: `CompleteProfile.tsx`
 
-1. **Reescribir NotFound.tsx**: Agregar i18n, Header/Footer, soporte dark mode, botón CTA de regreso
-2. **Corregir sidebar blocking logic**: Unificar `shouldBlockNavigation` para que compare contra `item.id === "negocio"` consistentemente
-3. **Internacionalizar Admin pages**: Mover todos los textos hardcodeados a `public/locales/{lang}/admin.json`
-4. **Internacionalizar PrivacyPolicy y TermsOfService**: Crear archivos de traducción `legal.json` para ES/EN/PT
-5. **Corregir UserProfile.tsx**: Reemplazar `bg-gray-*` por clases de tema (`bg-background`, `bg-muted`)
-6. **Pasar `user` real al SupportChatWidget**: Usar el state `user` de App.tsx
+### Paso 2: Internacionalizar contenido legal
+- Crear `public/locales/[es|en|pt]/legal.json` con todo el contenido de PrivacyPolicy y TermsOfService
+- Reemplazar strings hardcodeadas por claves `t('legal:...')`
+- **Archivos**: `PrivacyPolicy.tsx`, `TermsOfService.tsx`, + 3 archivos i18n
 
-### Fase 2: Media (Degradan calidad)
+### Paso 3: Reemplazar toasts hardcodeados (top 10 archivos más críticos)
+- Añadir `useTranslation` donde falte
+- Reemplazar `title: "Error"` por `title: t('errors:general.title')`
+- Reemplazar descripciones hardcodeadas por claves de traducción
+- **Archivos prioritarios**: `ResetPassword.tsx`, `ContentCreatorHub.tsx`, `SimpleContentPublisher.tsx`, `ContentLibraryTab.tsx`, `SocialConnectionManager.tsx`, `InsightsManager.tsx`, `CompanyManagementWidget.tsx`, `ContentGenerator.tsx`, `TargetAudience.tsx`, `AgentBuilderWizard.tsx`
 
-7. **Reemplazar todos los `title: "Error"` hardcodeados**: Script de búsqueda y reemplazo masivo por `t('common:status.error')`
-8. **Corregir Footer links**: Eliminar links a "#", redirigir "Contacto" a `/contacto`, ocultar link "Admin"
-9. **Eliminar roles obsoletos de CompleteProfile**: Remover opciones "developer" y "expert", dejar solo "company" (ocultar selector)
-10. **Separar "Configuración" de "Mi Negocio"**: Crear una vista de configuración de cuenta/suscripción dedicada
-11. **Hacer LanguageSelector visible en mobile**: Remover `hidden sm:block`
+### Paso 4: Wrappear console.logs en DEV guard
+- Reemplazar `console.log(...)` y `console.group(...)` con `if (import.meta.env.DEV)` en CompanyDashboard.tsx
+- **Archivo**: `CompanyDashboard.tsx`
 
-### Fase 3: Polish
+### Paso 5: Crear vista de Configuración separada
+- Crear componente `AccountSettingsView.tsx` con: suscripción, datos de cuenta, preferencias
+- Actualizar mapping en `CompanyDashboard.tsx` para que `configuracion` renderice la nueva vista
+- **Archivos**: nuevo `AccountSettingsView.tsx`, `CompanyDashboard.tsx`
 
-12. **Internacionalizar aria-labels y alt texts**
-13. **Crear página de Contacto real**: Formulario con campos nombre, email, mensaje
-14. **Limpiar console.logs de producción**: Wrappear en `if (import.meta.env.DEV)`
-15. **Actualizar sidebar tagline**: Cambiar "Marketing Autopilot" por algo alineado con "Empresa Autónoma"
+### Paso 6: Actualizar tagline del sidebar
+- Cambiar fallback de "Marketing Autopilot" a "Empresa Autónoma" o "Agentic Enterprise"
+- **Archivo**: `ResponsiveLayout.tsx` + archivos i18n `common.json`
+
+### Paso 7: Crear página de Contacto real
+- Formulario con nombre, email, asunto, mensaje
+- Integrar con el sistema de email interno de Buildera
+- **Archivo**: `Contacto.tsx`
 
 ---
 
-## Impacto Estimado
+## Resumen de impacto
 
-| Categoría | Brechas | Archivos afectados |
+| Paso | Archivos | Severidad |
 |---|---|---|
-| i18n / Textos hardcodeados | 8 | ~80 archivos |
-| Dark mode / Theming | 3 | 4 archivos |
-| Navegación / Routing | 5 | 3 archivos |
-| Lógica de negocio | 4 | 5 archivos |
-| Accesibilidad | 3 | 3 archivos |
+| 1. Roles obsoletos | 1 | Alta |
+| 2. Legal i18n | 5 | Alta |
+| 3. Toasts i18n | 10+ | Media |
+| 4. Console.log cleanup | 1 | Media |
+| 5. Vista Configuración | 2 | Media |
+| 6. Tagline | 2 | Baja |
+| 7. Contacto real | 1 | Baja |
 

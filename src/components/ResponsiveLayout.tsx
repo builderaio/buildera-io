@@ -388,15 +388,24 @@ const CompanyLayout = ({ profile, handleSignOut }: { profile: Profile; handleSig
   useEffect(() => {
     if (!companyId) return;
     const fetchAndAdvance = async () => {
-      // First check and advance based on actual data
-      await checkAndAdvance();
-      // Then fetch the (possibly updated) step
       const { data } = await supabase
         .from('companies')
         .select('journey_current_step')
         .eq('id', companyId)
         .single();
-      if (data?.journey_current_step) setJourneyStep(data.journey_current_step);
+      const step = data?.journey_current_step || 1;
+      setJourneyStep(step);
+      // Only run checkAndAdvance if not yet completed
+      if (step < 5) {
+        await checkAndAdvance();
+        // Re-fetch in case it advanced
+        const { data: updated } = await supabase
+          .from('companies')
+          .select('journey_current_step')
+          .eq('id', companyId)
+          .single();
+        if (updated?.journey_current_step) setJourneyStep(updated.journey_current_step);
+      }
     };
     fetchAndAdvance();
   }, [companyId, checkAndAdvance]);

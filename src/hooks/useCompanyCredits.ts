@@ -33,6 +33,20 @@ export const useCompanyCredits = (companyId?: string, userId?: string) => {
       startOfMonth.setDate(1);
       startOfMonth.setHours(0, 0, 0, 0);
 
+      // Check sessionStorage cache for subscription status
+      const CACHE_KEY = 'subscription-status-cache';
+      const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+      let cachedSubscription: any = null;
+      try {
+        const cached = sessionStorage.getItem(CACHE_KEY);
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (Date.now() - parsed.timestamp < CACHE_TTL) {
+            cachedSubscription = { data: parsed.data, error: null };
+          }
+        }
+      } catch {}
+
       // Fetch usage data and subscription plan credits in parallel
       const [usageResult, subscriptionResult] = await Promise.all([
         supabase
@@ -41,8 +55,18 @@ export const useCompanyCredits = (companyId?: string, userId?: string) => {
           .eq('company_id', companyId)
           .gte('created_at', startOfMonth.toISOString())
           .order('created_at', { ascending: false }),
-        supabase.functions.invoke('check-subscription-status'),
+        cachedSubscription || supabase.functions.invoke('check-subscription-status'),
       ]);
+
+      // Cache result if freshly fetched
+      if (!cachedSubscription && subscriptionResult.data) {
+        try {
+          sessionStorage.setItem(CACHE_KEY, JSON.stringify({
+            data: subscriptionResult.data,
+            timestamp: Date.now()
+          }));
+        } catch {}
+      }
 
       if (usageResult.error) {
         console.error('Error fetching usage:', usageResult.error);

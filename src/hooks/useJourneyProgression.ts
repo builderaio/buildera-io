@@ -42,6 +42,14 @@ export const useJourneyProgression = (companyId?: string) => {
     if (!companyId) return;
 
     try {
+      // Skip if journey already completed
+      const { data: companyData } = await supabase
+        .from('companies')
+        .select('journey_current_step')
+        .eq('id', companyId)
+        .single();
+      if ((companyData?.journey_current_step || 1) >= 5) return;
+
       const [socialRes, postsRes, autopilotRes, deptRes, strategyRes, agentsRes] = await Promise.all([
         supabase.from('social_accounts').select('id').eq('company_id', companyId).eq('is_connected', true).limit(1),
         supabase.from('scheduled_posts').select('id').limit(1),

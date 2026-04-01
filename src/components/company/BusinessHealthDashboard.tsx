@@ -19,6 +19,7 @@ import { useBusinessHealth, BusinessHealthKPI, ObjectiveProgress } from "@/hooks
 import { useDepartmentUnlocking } from "@/hooks/useDepartmentUnlocking";
 import { AgentInteractionPanel } from "@/components/agents/AgentInteractionPanel";
 import { EnterpriseAutopilotWelcome } from "@/components/company/EnterpriseAutopilotWelcome";
+import { useCompany } from "@/contexts/CompanyContext";
 import { cn } from "@/lib/utils";
 
 interface BusinessHealthDashboardProps {
@@ -233,7 +234,8 @@ const BusinessHealthDashboard = ({ profile, onNavigate }: BusinessHealthDashboar
   const { t, i18n } = useTranslation(['common', 'company']);
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
-  const [companyId, setCompanyId] = useState<string | null>(null);
+  const { company } = useCompany();
+  const companyId = company?.id || null;
   const [recentActivity, setRecentActivity] = useState<ActivityLog[]>([]);
   const [selectedAgent, setSelectedAgent] = useState<PlatformAgent | null>(null);
   const [agentPanelOpen, setAgentPanelOpen] = useState(false);
@@ -255,46 +257,39 @@ const BusinessHealthDashboard = ({ profile, onNavigate }: BusinessHealthDashboar
   });
 
   useEffect(() => {
-    if (profile?.user_id) {
+    if (companyId) {
       loadDashboardData();
+    } else if (!company) {
+      // Still loading company from context
     } else {
       setLoading(false);
     }
-  }, [profile?.user_id]);
+  }, [companyId]);
 
   const loadDashboardData = async () => {
+    if (!companyId) return;
     setLoading(true);
     try {
-      const { data: company } = await supabase
-        .from('companies')
-        .select('id')
-        .eq('created_by', profile.user_id)
-        .maybeSingle();
-      
-      setCompanyId(company?.id || null);
+      const [usageLogs, objectivesData] = await Promise.all([
+        supabase
+          .from('agent_usage_log')
+          .select(`
+            id, created_at, status, output_summary, error_message, credits_consumed,
+            platform_agents(name, icon)
+          `)
+          .eq('company_id', companyId)
+          .order('created_at', { ascending: false })
+          .limit(5),
+        supabase
+          .from('company_objectives')
+          .select('title')
+          .eq('company_id', companyId)
+          .eq('priority', 1)
+          .maybeSingle(),
+      ]);
 
-      if (company?.id) {
-        const [usageLogs, objectivesData] = await Promise.all([
-          supabase
-            .from('agent_usage_log')
-            .select(`
-              id, created_at, status, output_summary, error_message, credits_consumed,
-              platform_agents(name, icon)
-            `)
-            .eq('company_id', company.id)
-            .order('created_at', { ascending: false })
-            .limit(5),
-          supabase
-            .from('company_objectives')
-            .select('title')
-            .eq('company_id', company.id)
-            .eq('priority', 1)
-            .maybeSingle(),
-        ]);
-
-        setRecentActivity((usageLogs.data as ActivityLog[]) || []);
-        setPrimaryObjective(objectivesData.data?.[0]?.title || null);
-      }
+      setRecentActivity((usageLogs.data as ActivityLog[]) || []);
+      setPrimaryObjective(objectivesData.data?.[0]?.title || null);
     } catch (error) {
       console.error('Error loading dashboard:', error);
     } finally {

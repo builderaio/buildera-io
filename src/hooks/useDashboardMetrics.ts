@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
@@ -157,8 +157,11 @@ export const useDashboardMetrics = (userId?: string) => {
   }, [userId]);
 
   // Auto-calcular métricas si no existen o son muy antiguas (más de 24 horas)
+  const hasAttemptedCalculation = useRef(false);
   useEffect(() => {
-    if (!loading && userId && (!metrics || isDataOld(metrics.last_calculated_at))) {
+    if (!loading && userId && !hasAttemptedCalculation.current &&
+        (!metrics || isDataOld(metrics.last_calculated_at))) {
+      hasAttemptedCalculation.current = true;
       calculateMetrics();
     }
   }, [loading, userId, metrics]);

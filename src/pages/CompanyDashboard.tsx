@@ -180,7 +180,7 @@ const CompanyDashboard = () => {
           } else {
             // Ya pasó por complete-profile pero algo falló en la creación de empresa
             // Mostrar el onboarding para que pueda reintentar
-            console.log('⚠️ Usuario completó first_login pero sin empresa, mostrar onboarding');
+            if (import.meta.env.DEV) console.log('⚠️ Usuario completó first_login pero sin empresa');
             setActiveView('onboarding');
           }
           console.groupEnd();

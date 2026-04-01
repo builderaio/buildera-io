@@ -43,7 +43,7 @@ import ptErrors from '../../public/locales/pt/errors.json';
 import ptValidation from '../../public/locales/pt/validation.json';
 import ptNotifications from '../../public/locales/pt/notifications.json';
 import ptCreatify from '../../public/locales/pt/creatify.json';
-
+import ptLegal from '../../public/locales/pt/legal.json';
 export const resources = {
   es: {
     common: esCommon,

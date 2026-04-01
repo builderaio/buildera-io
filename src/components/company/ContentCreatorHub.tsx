@@ -46,8 +46,8 @@ export default function ContentCreatorHub({ profile, onContentPublished }: Conte
     onOptimized: (optimized) => {
       setManualContent(optimized);
       toast({
-        title: "¡Contenido optimizado!",
-        description: "Tu contenido ha sido mejorado por Era"
+        title: t('marketing:creator.optimized'),
+        description: t('marketing:creator.optimizedDesc')
       });
     }
   });

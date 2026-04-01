@@ -75,6 +75,7 @@ export const resources = {
     validation: enValidation,
     notifications: enNotifications,
     creatify: enCreatify,
+    legal: enLegal,
   },
   pt: {
     common: ptCommon,

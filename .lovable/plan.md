@@ -1,103 +1,120 @@
 
 
-# Fallas Pendientes en la Plataforma Buildera
+# Problemas Funcionales Críticos en el Módulo de Marketing
 
-Tras revisar el estado actual del código post-correcciones, identifico las siguientes fallas que aún persisten organizadas por prioridad.
+## Hallazgos
+
+### SEVERIDAD CRÍTICA — Funcionalidad Rota
+
+**1. ContentGenerator.tsx usa datos MOCK en lugar de IA real**
+- Líneas 86-97: `await new Promise(resolve => setTimeout(resolve, 2000))` — simula una espera de 2 segundos y luego devuelve contenido hardcodeado con `generateMockContent()`
+- La función NUNCA llama a un Edge Function ni a ninguna API de IA
+- El usuario cree que está generando contenido con IA pero recibe templates estáticos predefinidos
+- **Archivo**: `src/components/company/ContentGenerator.tsx`
+
+**2. "Email Sequence" en CrearContentHub no tiene implementación**
+- El card de "Email Sequence" se muestra en la UI pero no hay handler para `activePath === "email-sequence"`
+- Al hacer click, el estado cambia a `"email-sequence"` pero ningún `if` lo captura, así que se muestra la pantalla de selección de nuevo (bucle silencioso)
+- **Archivo**: `src/components/company/CrearContentHub.tsx` (líneas 19, 114)
+
+**3. Toast `title: 'Error'` hardcodeado en SimpleContentPublisher línea 602**
+- Pese a correcciones previas, la línea 602 aún usa `title: 'Error'` en lugar de `t('errors:general.title')`
+- **Archivo**: `src/components/company/SimpleContentPublisher.tsx`
+
+### SEVERIDAD ALTA — Degradan UX Significativamente
+
+**4. ContentCreatorHub.tsx — 20+ strings hardcodeadas en español sin i18n**
+- "Creación Rápida" (línea 269), "Con IA" (274), "Manual" (275), "Plataforma" (289), "Formato" (306)
+- "Generando..." (330), "Generar Contenido" (335), "Optimizar con Era" (363), "Generar Ideas" (412)
+- "No hay ideas de contenido" (430), "Cargando ideas de contenido..." (422)
+- Toasts: "Generando ideas" (93), "¡Ideas generadas!" (108), "¡Contenido generado!" (158), "Preparando contenido" (210)
+- **Archivo**: `src/components/company/ContentCreatorHub.tsx`
+
+**5. ContentCreatorTab.tsx — 30+ strings hardcodeadas + tema roto en dark mode**
+- `bg-white/80` en 3 instancias (líneas 442, 450, 530, 556, 584) — rompe dark mode completamente
+- `text-blue-900` (451), `text-purple-700` (559), `text-orange-700` (588) — colores hardcodeados
+- Textos: "Content Studio IA - Versión Avanzada" (247, 273), "Crear Contenido" (314), "Generación IA" (327)
+- "Escribir Manual" (333), "Generar Contenido con IA" (364), "Publicar Ahora" (480), "Limpiar" (496)
+- `border-purple-200 bg-gradient-to-br from-purple-50 to-pink-50` (línea 270) — hardcoded light theme
+- **Archivo**: `src/components/company/ContentCreatorTab.tsx`
+
+**6. ContentLibraryTab.tsx — 100% sin i18n**
+- "Biblioteca de Contenidos" (78), "elementos" (79), "Actualizar" (88)
+- "Tu colección personal de contenido exitoso..." (91), "Tu biblioteca está vacía" (99)
+- "Contenido eliminado" (45), `title: "Error"` hardcodeado (49)
+- "Copiar URL" (175), "URL copiada" (173)
+- **Archivo**: `src/components/company/ContentLibraryTab.tsx`
+
+**7. ContentGenerator.tsx — 100% sin i18n**
+- Todo el componente usa strings en español hardcodeadas: "Post de Texto", "Post con Imagen", "Video/Reel"
+- Tones: "Profesional", "Casual", "Entusiasta", etc.
+- Toasts y labels todos hardcodeados
+- **Archivo**: `src/components/company/ContentGenerator.tsx`
+
+**8. ScheduledPostsManager.tsx — Emoji icons en lugar de componentes**
+- Usa emojis como iconos de plataforma ('📘', '📷', '💼') en vez de los componentes de iconos reales (FaFacebook, FaInstagram, etc.)
+- Probablemente sin i18n (nombre de componente y patrón sugieren hardcoded)
+
+**9. `console.log` en producción en SimpleContentPublisher**
+- Línea 507: `console.log('Successfully published via edge function:', data)`
+- Línea 573: `console.log('📊 Content tracking:', { source, contentIdeaId, ... })`
+
+### SEVERIDAD MEDIA — Inconsistencias
+
+**10. ContentCreatorTab.tsx — Duplicación lógica del Advanced Creator**
+- El `showAdvancedCreator` se renderiza dos veces: una en el early return (línea 217-236) y otra dentro del main return (línea 241-266)
+- La primera instancia nunca se alcanza porque el segundo render ya maneja ambos estados
+
+**11. ContentCreatorHub.tsx — useEraOptimizer callback con toast hardcodeado**
+- Línea 49: `"¡Contenido optimizado!"` y `"Tu contenido ha sido mejorado por Era"` — sin i18n
 
 ---
 
-## FALLAS ACTIVAS
+## Plan de Corrección (por prioridad)
 
-### 1. PrivacyPolicy.tsx y TermsOfService.tsx -- i18n NO aplicado al contenido
-- Se agregó `useTranslation` y `bg-background`, pero **todo el contenido sigue hardcodeado en español**
-- "Volver a Inicio", "Política de Privacidad y Seguridad", "Última actualización: Enero 2025", "Términos de Servicio", etc.
-- No se crearon archivos `legal.json` de traducción
-- **Archivos**: `PrivacyPolicy.tsx`, `TermsOfService.tsx`
+### Paso 1: Reemplazar ContentGenerator mock por IA real
+- Eliminar `generateMockContent()` y `generateMockHashtags()`
+- Invocar `generate-company-content` Edge Function (mismo patrón que `ContentCreatorHub.handleQuickCreateWithAI`)
+- Agregar i18n a todo el componente
 
-### 2. Toasts hardcodeados `title: "Error"` -- 445 instancias en 37 archivos
-- La corrección masiva nunca se ejecutó
-- Archivos más críticos: `SimpleContentPublisher.tsx`, `ContentCreatorHub.tsx`, `ContentLibraryTab.tsx`, `SocialConnectionManager.tsx`, `ResetPassword.tsx`, `InsightsManager.tsx`, `AgentBuilderWizard.tsx`
-- Descripciones también hardcodeadas en español (ej: "No se pudo eliminar el contenido")
+### Paso 2: Implementar o deshabilitar "Email Sequence"
+- **Opción A**: Crear componente `EmailSequenceBuilder.tsx` con formulario básico (subject, body, schedule) integrado con el sistema de email interno
+- **Opción B**: Ocultar temporalmente el card con un badge "Próximamente" y no hacer nada al clickear
+- Recomendar **Opción B** por ahora (menor riesgo, Feature compleja)
 
-### 3. Console.log en producción -- 20+ instancias en CompanyDashboard.tsx
-- `console.group('🔐 [CompanyDashboard] checkAuth')` y docenas de `console.log` con datos de sesión
-- Expone información del usuario (user_id, email, user_type) en la consola del navegador
-- **Archivo**: `CompanyDashboard.tsx`
+### Paso 3: Internacionalizar ContentCreatorHub.tsx
+- Agregar claves al namespace `marketing` (ES/EN/PT)
+- Reemplazar las ~20 strings por `t('marketing:...')`
 
-### 4. CompleteProfile.tsx -- roles obsoletos "developer" y "expert" aún activos
-- Líneas 239-241: `<SelectItem value="developer">`, `<SelectItem value="expert">`
-- Ambos redirigen a `/company-dashboard` sin funcionalidad diferenciada
-- Formularios de developer (GitHub, skills) y expert (industry, expertise) aún visibles
-- **Archivo**: `CompleteProfile.tsx`
+### Paso 4: Fix ContentCreatorTab.tsx — dark mode + i18n
+- Reemplazar `bg-white/80` → `bg-card/80`
+- Reemplazar `from-purple-50 to-pink-50` → `from-purple-500/5 to-pink-500/5`
+- Eliminar `text-blue-900`, `text-purple-700`, `text-orange-700` → usar `text-primary` o `text-foreground`
+- Internacionalizar ~30 strings
+- Eliminar renderizado duplicado del Advanced Creator
 
-### 5. "Configuración" en sidebar footer apunta a "negocio" (mismo destino que "Mi Negocio")
-- Línea 492 de ResponsiveLayout: `setActiveView('configuracion')` → se mapea a `negocio`
-- No existe vista de configuración de cuenta/suscripción separada
-- **Archivo**: `ResponsiveLayout.tsx`
+### Paso 5: Internacionalizar ContentLibraryTab.tsx
+- Agregar `useTranslation`
+- Reemplazar todas las strings + fix `title: "Error"` → `t('errors:general.title')`
 
-### 6. Sidebar tagline "Marketing Autopilot" no refleja propuesta de valor
-- Línea 221: `t('common:sidebar.platformTagline', 'Marketing Autopilot')`
-- Buildera es una plataforma de "Empresa Autónoma", no solo marketing
+### Paso 6: Fix SimpleContentPublisher remaining issues
+- Línea 602: `title: 'Error'` → `t('errors:general.title')`
+- Wrap `console.log` líneas 507, 573 en `if (import.meta.env.DEV)`
 
-### 7. Contacto page sin formulario real
-- Solo renderiza `<FinalCTA />` -- un CTA genérico, no una página de contacto
-- **Archivo**: `Contacto.tsx`
-
-### 8. Doble checkAuth redundante
-- `ResponsiveLayout.tsx` hace retry loop de 6 intentos para auth
-- `CompanyDashboard.tsx` hace su propio `checkAuth()` independiente
-- Puede causar race conditions y carga lenta
-
----
-
-## PLAN DE CORRECCIÓN
-
-### Paso 1: Eliminar roles obsoletos de CompleteProfile
-- Remover opciones "developer" y "expert" del `<Select>`
-- Auto-setear `userType = 'company'` 
-- Eliminar formularios condicionales de developer/expert
-- **Archivo**: `CompleteProfile.tsx`
-
-### Paso 2: Internacionalizar contenido legal
-- Crear `public/locales/[es|en|pt]/legal.json` con todo el contenido de PrivacyPolicy y TermsOfService
-- Reemplazar strings hardcodeadas por claves `t('legal:...')`
-- **Archivos**: `PrivacyPolicy.tsx`, `TermsOfService.tsx`, + 3 archivos i18n
-
-### Paso 3: Reemplazar toasts hardcodeados (top 10 archivos más críticos)
-- Añadir `useTranslation` donde falte
-- Reemplazar `title: "Error"` por `title: t('errors:general.title')`
-- Reemplazar descripciones hardcodeadas por claves de traducción
-- **Archivos prioritarios**: `ResetPassword.tsx`, `ContentCreatorHub.tsx`, `SimpleContentPublisher.tsx`, `ContentLibraryTab.tsx`, `SocialConnectionManager.tsx`, `InsightsManager.tsx`, `CompanyManagementWidget.tsx`, `ContentGenerator.tsx`, `TargetAudience.tsx`, `AgentBuilderWizard.tsx`
-
-### Paso 4: Wrappear console.logs en DEV guard
-- Reemplazar `console.log(...)` y `console.group(...)` con `if (import.meta.env.DEV)` en CompanyDashboard.tsx
-- **Archivo**: `CompanyDashboard.tsx`
-
-### Paso 5: Crear vista de Configuración separada
-- Crear componente `AccountSettingsView.tsx` con: suscripción, datos de cuenta, preferencias
-- Actualizar mapping en `CompanyDashboard.tsx` para que `configuracion` renderice la nueva vista
-- **Archivos**: nuevo `AccountSettingsView.tsx`, `CompanyDashboard.tsx`
-
-### Paso 6: Actualizar tagline del sidebar
-- Cambiar fallback de "Marketing Autopilot" a "Empresa Autónoma" o "Agentic Enterprise"
-- **Archivo**: `ResponsiveLayout.tsx` + archivos i18n `common.json`
-
-### Paso 7: Crear página de Contacto real
-- Formulario con nombre, email, asunto, mensaje
-- Integrar con el sistema de email interno de Buildera
-- **Archivo**: `Contacto.tsx`
+### Paso 7: Fix ScheduledPostsManager emoji icons
+- Verificar i18n y reemplazar emojis por componentes icon reales
 
 ---
 
 ## Resumen de impacto
 
-| Paso | Archivos | Severidad |
-|---|---|---|
-| 1. Roles obsoletos | 1 | Alta |
-| 2. Legal i18n | 5 | Alta |
-| 3. Toasts i18n | 10+ | Media |
-| 4. Console.log cleanup | 1 | Media |
-| 5. Vista Configuración | 2 | Media |
-| 6. Tagline | 2 | Baja |
-| 7. Contacto real | 1 | Baja |
+| Paso | Severidad | Archivos |
+|------|-----------|----------|
+| 1. Mock → IA real | Crítica | 1 |
+| 2. Email Sequence | Crítica | 1 |
+| 3. ContentCreatorHub i18n | Alta | 1 + locales |
+| 4. ContentCreatorTab dark+i18n | Alta | 1 |
+| 5. ContentLibraryTab i18n | Alta | 1 |
+| 6. Publisher fixes | Media | 1 |
+| 7. ScheduledPosts icons | Media | 1 |
 

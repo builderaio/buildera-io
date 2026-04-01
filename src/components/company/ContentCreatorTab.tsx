@@ -214,26 +214,7 @@ export default function ContentCreatorTab({ profile, topPosts, selectedPlatform,
     });
   };
 
-  if (showAdvancedCreator) {
-    return (
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <Button 
-            variant="outline" 
-            onClick={() => setShowAdvancedCreator(false)}
-            size="sm"
-          >
-            ← Volver a Creador Simple
-          </Button>
-        </div>
-        <AdvancedContentCreator 
-          profile={profile}
-          topPosts={topPosts}
-          selectedPlatform={selectedPlatform}
-        />
-      </div>
-    );
-  }
+  // Removed duplicate early return for showAdvancedCreator - handled in main render below
 
   return (
     <div className="space-y-6">

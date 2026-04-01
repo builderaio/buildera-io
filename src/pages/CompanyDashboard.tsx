@@ -149,7 +149,7 @@ const CompanyDashboard = () => {
         }
         
         setLoading(false);
-        console.groupEnd();
+        if (import.meta.env.DEV) console.groupEnd();
         return;
       } else {
         const { data: companies } = await supabase

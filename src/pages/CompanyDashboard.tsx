@@ -292,8 +292,8 @@ const CompanyDashboard = () => {
         });
       }
       
-      console.log('✅ Auth check complete');
-      console.groupEnd();
+      if (import.meta.env.DEV) console.log('✅ Auth check complete');
+      if (import.meta.env.DEV) console.groupEnd();
       setLoading(false);
     };
 

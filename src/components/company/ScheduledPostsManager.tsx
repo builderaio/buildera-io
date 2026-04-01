@@ -66,6 +66,7 @@ export const ScheduledPostsManager = ({ profile, onPostsUpdated }: ScheduledPost
   const [companyUsername, setCompanyUsername] = useState('');
   const [userId, setUserId] = useState<string | null>(profile?.user_id ?? null);
   const { toast } = useToast();
+  const { t } = useTranslation(['marketing', 'errors']);
 
   // Resolver userId y luego cargar datos
   useEffect(() => {

@@ -178,8 +178,8 @@ export const ScheduledPostsManager = ({ profile, onPostsUpdated }: ScheduledPost
       }
 
       toast({
-        title: "Post cancelado",
-        description: "La publicación programada ha sido cancelada",
+        title: t('marketing:scheduled.cancelled'),
+        description: t('marketing:scheduled.cancelledDesc'),
       });
 
       await loadScheduledPosts();

@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
+import { useTranslation } from 'react-i18next';
 import { supabase } from '@/integrations/supabase/client';
 import { 
   Calendar as CalendarIcon, 
@@ -48,6 +49,7 @@ const ContentCalendar = ({ profile }: ContentCalendarProps) => {
   });
 
   const { toast } = useToast();
+  const { t, i18n } = useTranslation(['marketing', 'errors']);
 
   const platforms = {
     linkedin: { name: 'LinkedIn', icon: FaLinkedin, color: 'bg-blue-700' },
@@ -77,7 +79,6 @@ const ContentCalendar = ({ profile }: ContentCalendarProps) => {
 
       setScheduledPosts(data || []);
       
-      // Calculate stats
       const today = new Date().toDateString();
       const newStats = {
         scheduled: data?.filter(p => p.status === 'scheduled').length || 0,
@@ -90,8 +91,8 @@ const ContentCalendar = ({ profile }: ContentCalendarProps) => {
     } catch (error) {
       console.error('Error loading scheduled posts:', error);
       toast({
-        title: 'Error',
-        description: 'No se pudieron cargar los posts programados',
+        title: t('errors:general.title'),
+        description: t('marketing:calendar.loadError'),
         variant: 'destructive'
       });
     } finally {
@@ -101,20 +102,20 @@ const ContentCalendar = ({ profile }: ContentCalendarProps) => {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'scheduled': return 'bg-blue-100 text-blue-800';
-      case 'published': return 'bg-green-100 text-green-800';
-      case 'failed': return 'bg-red-100 text-red-800';
-      case 'processing': return 'bg-yellow-100 text-yellow-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'scheduled': return 'bg-blue-500/10 text-blue-500';
+      case 'published': return 'bg-green-500/10 text-green-500';
+      case 'failed': return 'bg-red-500/10 text-red-500';
+      case 'processing': return 'bg-yellow-500/10 text-yellow-500';
+      default: return 'bg-muted text-muted-foreground';
     }
   };
 
   const getStatusLabel = (status: string) => {
     switch (status) {
-      case 'scheduled': return 'Programado';
-      case 'published': return 'Publicado';
-      case 'failed': return 'Error';
-      case 'processing': return 'Procesando';
+      case 'scheduled': return t('marketing:calendar.status.scheduled');
+      case 'published': return t('marketing:calendar.status.published');
+      case 'failed': return t('marketing:calendar.status.failed');
+      case 'processing': return t('marketing:calendar.status.processing');
       default: return status;
     }
   };
@@ -166,44 +167,40 @@ const ContentCalendar = ({ profile }: ContentCalendarProps) => {
       if (error) throw error;
 
       toast({
-        title: 'Post eliminado',
-        description: 'El post programado ha sido eliminado'
+        title: t('marketing:calendar.postDeleted'),
+        description: t('marketing:calendar.postDeletedDesc')
       });
 
       await loadScheduledPosts();
     } catch (error) {
       console.error('Error deleting post:', error);
       toast({
-        title: 'Error',
-        description: 'No se pudo eliminar el post',
+        title: t('errors:general.title'),
+        description: t('marketing:calendar.deleteError'),
         variant: 'destructive'
       });
     }
   };
+
+  const weekDaysKeys = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'] as const;
 
   const renderCalendarGrid = () => {
     const daysInMonth = getDaysInMonth(currentDate);
     const firstDay = getFirstDayOfMonth(currentDate);
     const days = [];
 
-    // Días de la semana
-    const weekDays = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
-    
-    // Header de días de la semana
-    const headerDays = weekDays.map(day => (
-      <div key={day} className="p-2 text-center text-sm font-medium text-muted-foreground border-b">
-        {day}
+    const headerDays = weekDaysKeys.map(day => (
+      <div key={day} className="p-2 text-center text-sm font-medium text-muted-foreground border-b border-border">
+        {t(`marketing:calendar.weekDays.${day}`)}
       </div>
     ));
 
-    // Espacios vacíos al inicio del mes
     for (let i = 0; i < firstDay; i++) {
       days.push(
-        <div key={`empty-${i}`} className="p-2 border-b border-r min-h-[120px]"></div>
+        <div key={`empty-${i}`} className="p-2 border-b border-r border-border min-h-[120px]"></div>
       );
     }
 
-    // Días del mes
     for (let day = 1; day <= daysInMonth; day++) {
       const date = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
       const postsForDay = getPostsForDate(date);
@@ -213,7 +210,7 @@ const ContentCalendar = ({ profile }: ContentCalendarProps) => {
       days.push(
         <div 
           key={day} 
-          className={`p-2 border-b border-r min-h-[120px] cursor-pointer hover:bg-muted/50 transition-colors ${
+          className={`p-2 border-b border-r border-border min-h-[120px] cursor-pointer hover:bg-muted/50 transition-colors ${
             isToday ? 'bg-primary/5 border-primary' : ''
           } ${isSelected ? 'bg-primary/10' : ''}`}
           onClick={() => setSelectedDate(date)}
@@ -242,7 +239,7 @@ const ContentCalendar = ({ profile }: ContentCalendarProps) => {
             })}
             {postsForDay.length > 3 && (
               <div className="text-xs text-muted-foreground">
-                +{postsForDay.length - 3} más
+                +{postsForDay.length - 3} {t('marketing:calendar.more')}
               </div>
             )}
           </div>
@@ -263,7 +260,7 @@ const ContentCalendar = ({ profile }: ContentCalendarProps) => {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Clock className="h-5 w-5" />
-          Próximas Publicaciones
+          {t('marketing:calendar.upcomingPosts')}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -276,10 +273,10 @@ const ContentCalendar = ({ profile }: ContentCalendarProps) => {
             const IconComponent = platform?.icon || FaInstagram;
             const StatusIcon = getStatusIcon(post.status);
             const content = typeof post.content === 'string' ? post.content : 
-                           post.content?.content || post.content?.text || 'Sin contenido';
+                           post.content?.content || post.content?.text || t('marketing:calendar.noContent');
             
             return (
-              <div key={post.id} className="flex items-start gap-3 p-3 border rounded-lg">
+              <div key={post.id} className="flex items-start gap-3 p-3 border border-border rounded-lg">
                 <div className={`p-2 rounded ${platform?.color || 'bg-gray-500'}`}>
                   <IconComponent className="h-4 w-4 text-white" />
                 </div>
@@ -297,7 +294,7 @@ const ContentCalendar = ({ profile }: ContentCalendarProps) => {
                   <div className="flex items-center gap-4 text-xs text-muted-foreground">
                     <span className="flex items-center gap-1">
                       <CalendarIcon className="h-3 w-3" />
-                      {new Date(post.scheduled_for).toLocaleDateString()}
+                      {new Date(post.scheduled_for).toLocaleDateString(i18n.language)}
                     </span>
                     <span className="flex items-center gap-1">
                       <Clock className="h-3 w-3" />
@@ -305,8 +302,8 @@ const ContentCalendar = ({ profile }: ContentCalendarProps) => {
                     </span>
                   </div>
                   {post.error_message && (
-                    <p className="text-xs text-red-600 mt-1">
-                      Error: {post.error_message}
+                    <p className="text-xs text-destructive mt-1">
+                      {t('errors:general.title')}: {post.error_message}
                     </p>
                   )}
                 </div>
@@ -332,8 +329,8 @@ const ContentCalendar = ({ profile }: ContentCalendarProps) => {
         {scheduledPosts.filter(post => post.status === 'scheduled' && new Date(post.scheduled_for) > new Date()).length === 0 && (
           <div className="text-center py-6 text-muted-foreground">
             <CalendarIcon className="h-8 w-8 mx-auto mb-2" />
-            <p>No hay publicaciones programadas</p>
-            <p className="text-sm">Crea contenido programado desde las pestañas de creación</p>
+            <p>{t('marketing:calendar.noPosts')}</p>
+            <p className="text-sm">{t('marketing:calendar.noPostsHint')}</p>
           </div>
         )}
       </CardContent>
@@ -344,18 +341,24 @@ const ContentCalendar = ({ profile }: ContentCalendarProps) => {
     return (
       <div className="flex items-center justify-center h-64">
         <RefreshCw className="h-8 w-8 animate-spin" />
-        <span className="ml-2">Cargando calendario...</span>
+        <span className="ml-2">{t('marketing:calendar.loading')}</span>
       </div>
     );
   }
+
+  const viewModeLabels: Record<string, string> = {
+    month: t('marketing:calendar.viewMonth'),
+    week: t('marketing:calendar.viewWeek'),
+    day: t('marketing:calendar.viewDay')
+  };
 
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight">Calendario de Contenido</h2>
+          <h2 className="text-2xl font-bold tracking-tight">{t('marketing:calendar.title')}</h2>
           <p className="text-muted-foreground">
-            Visualiza y gestiona todo tu contenido programado
+            {t('marketing:calendar.subtitle')}
           </p>
         </div>
         <Button 
@@ -363,39 +366,39 @@ const ContentCalendar = ({ profile }: ContentCalendarProps) => {
           onClick={() => loadScheduledPosts()}
         >
           <RefreshCw className="h-4 w-4" />
-          Actualizar
+          {t('marketing:calendar.refresh')}
         </Button>
       </div>
 
-      {/* Estadísticas */}
+      {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardContent className="p-6 text-center">
-            <div className="text-2xl font-bold text-blue-600">{stats.scheduled}</div>
-            <div className="text-sm text-muted-foreground">Posts programados</div>
+            <div className="text-2xl font-bold text-blue-500">{stats.scheduled}</div>
+            <div className="text-sm text-muted-foreground">{t('marketing:calendar.statsScheduled')}</div>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-6 text-center">
-            <div className="text-2xl font-bold text-green-600">{stats.published}</div>
-            <div className="text-sm text-muted-foreground">Posts publicados</div>
+            <div className="text-2xl font-bold text-green-500">{stats.published}</div>
+            <div className="text-sm text-muted-foreground">{t('marketing:calendar.statsPublished')}</div>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-6 text-center">
-            <div className="text-2xl font-bold text-orange-600">{stats.today}</div>
-            <div className="text-sm text-muted-foreground">Para hoy</div>
+            <div className="text-2xl font-bold text-orange-500">{stats.today}</div>
+            <div className="text-sm text-muted-foreground">{t('marketing:calendar.statsToday')}</div>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-6 text-center">
-            <div className="text-2xl font-bold text-red-600">{stats.failed}</div>
-            <div className="text-sm text-muted-foreground">Con errores</div>
+            <div className="text-2xl font-bold text-red-500">{stats.failed}</div>
+            <div className="text-sm text-muted-foreground">{t('marketing:calendar.statsFailed')}</div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Controles del calendario */}
+      {/* Calendar Controls */}
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
@@ -404,22 +407,22 @@ const ContentCalendar = ({ profile }: ContentCalendarProps) => {
                 <ChevronLeft className="h-4 w-4" />
               </Button>
               <h3 className="text-lg font-semibold">
-                {currentDate.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })}
+                {currentDate.toLocaleDateString(i18n.language, { month: 'long', year: 'numeric' })}
               </h3>
               <Button variant="outline" size="sm" onClick={() => navigateMonth('next')}>
                 <ChevronRight className="h-4 w-4" />
               </Button>
             </div>
             <div className="flex items-center gap-1 bg-muted rounded-lg p-1">
-              {['month', 'week', 'day'].map((mode) => (
+              {(['month', 'week', 'day'] as const).map((mode) => (
                 <Button
                   key={mode}
                   variant={viewMode === mode ? "default" : "ghost"}
                   size="sm"
-                  onClick={() => setViewMode(mode as any)}
+                  onClick={() => setViewMode(mode)}
                   className="h-8 px-3"
                 >
-                  {mode === 'month' ? 'Mes' : mode === 'week' ? 'Semana' : 'Día'}
+                  {viewModeLabels[mode]}
                 </Button>
               ))}
             </div>
@@ -433,25 +436,25 @@ const ContentCalendar = ({ profile }: ContentCalendarProps) => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {renderUpcomingPosts()}
         
-        {/* Plantillas rápidas */}
+        {/* Quick Actions */}
         <Card>
           <CardHeader>
-            <CardTitle>Acciones Rápidas</CardTitle>
+            <CardTitle>{t('marketing:calendar.quickActions')}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             {[
-              { name: 'Crear contenido', action: 'create', time: '2 min' },
-              { name: 'Programar campaña', action: 'campaign', time: '5 min' },
-              { name: 'Revisar errores', action: 'errors', time: '1 min' },
-              { name: 'Ver métricas', action: 'metrics', time: '1 min' }
+              { nameKey: 'marketing:calendar.actions.createContent', time: '2 min' },
+              { nameKey: 'marketing:calendar.actions.scheduleCampaign', time: '5 min' },
+              { nameKey: 'marketing:calendar.actions.reviewErrors', time: '1 min' },
+              { nameKey: 'marketing:calendar.actions.viewMetrics', time: '1 min' }
             ].map((action, index) => (
-              <div key={index} className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors">
+              <div key={index} className="flex items-center justify-between p-3 border border-border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors">
                 <div>
-                  <p className="font-medium text-sm">{action.name}</p>
-                  <p className="text-xs text-muted-foreground">~{action.time} para completar</p>
+                  <p className="font-medium text-sm">{t(action.nameKey)}</p>
+                  <p className="text-xs text-muted-foreground">~{action.time} {t('marketing:calendar.toComplete')}</p>
                 </div>
                 <Button variant="outline" size="sm">
-                  Ir
+                  {t('marketing:calendar.go')}
                 </Button>
               </div>
             ))}

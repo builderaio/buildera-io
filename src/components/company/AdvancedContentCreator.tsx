@@ -55,7 +55,7 @@ export default function AdvancedContentCreator({ profile, topPosts, selectedPlat
 
   // Load existing insights on component mount
   useEffect(() => {
-    console.log('AdvancedContentCreator mounted with profile:', profile);
+    if (import.meta.env.DEV) console.log('AdvancedContentCreator mounted with profile:', profile);
     if (profile.user_id) {
       loadInsights();
       loadGeneratedContents();

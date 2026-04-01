@@ -76,10 +76,10 @@ const CompanyDashboard = () => {
         if (import.meta.env.DEV) console.log('🔄 Showing onboarding orchestrator');
         setActiveView('onboarding');
         setLoading(false);
-        console.groupEnd();
+        if (import.meta.env.DEV) console.groupEnd();
         return;
       } else if (viewParam) {
-        console.log('🎯 Setting activeView from URL:', viewParam);
+        if (import.meta.env.DEV) console.log('🎯 Setting activeView from URL:', viewParam);
         setActiveView(viewParam);
         
         const { data: profileData } = await supabase

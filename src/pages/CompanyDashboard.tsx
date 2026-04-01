@@ -159,12 +159,9 @@ const CompanyDashboard = () => {
 
         const hasCompany = companies && companies.length > 0;
 
-        console.log('🔍 CompanyDashboard onboarding check:', {
+        if (import.meta.env.DEV) console.log('🔍 CompanyDashboard onboarding check:', {
           hasCompany,
           companiesLength: companies?.length,
-          userId: session.user.id,
-          viewParam,
-          onboardingCompleted: !!onboardingStatus?.onboarding_completed_at
         });
 
         // Solo redirigir a complete-profile si NO tiene empresa Y no está intentando hacer onboarding

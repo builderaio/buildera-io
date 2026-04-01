@@ -345,7 +345,7 @@ const CompanyDashboard = () => {
   };
 
   const renderContent = () => {
-    console.log('🔄 Rendering content for activeView:', activeView);
+    if (import.meta.env.DEV) console.log('🔄 Rendering content for activeView:', activeView);
     switch (activeView) {
       // Onboarding
       case "onboarding":

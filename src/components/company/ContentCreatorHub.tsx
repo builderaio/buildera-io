@@ -303,7 +303,7 @@ export default function ContentCreatorHub({ profile, onContentPublished }: Conte
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Formato</label>
+                  <label className="text-sm font-medium">{t('marketing:creator.format')}</label>
                   <Select value={selectedFormat} onValueChange={setSelectedFormat}>
                     <SelectTrigger>
                       <SelectValue />

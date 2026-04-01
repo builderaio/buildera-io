@@ -87,10 +87,10 @@ export default function ResetPassword() {
       }, 2000);
 
     } catch (error: any) {
-      console.error("Error restableciendo contraseña:", error);
+      if (import.meta.env.DEV) console.error("Error resetting password:", error);
       toast({
-        title: "Error",
-        description: error.message || "No se pudo restablecer la contraseña",
+        title: t('errors:general.title'),
+        description: error.message || t('auth:resetPassword.error', 'No se pudo restablecer la contraseña'),
         variant: "destructive",
       });
     } finally {

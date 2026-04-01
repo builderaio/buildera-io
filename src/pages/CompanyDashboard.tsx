@@ -95,7 +95,7 @@ const CompanyDashboard = () => {
         }
         
         setLoading(false);
-        console.groupEnd();
+        if (import.meta.env.DEV) console.groupEnd();
         return;
       }
 

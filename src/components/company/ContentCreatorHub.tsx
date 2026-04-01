@@ -427,13 +427,13 @@ export default function ContentCreatorHub({ profile, onContentPublished }: Conte
           <Card className="border-dashed">
             <CardContent className="flex flex-col items-center justify-center py-12">
               <Sparkles className="w-12 h-12 text-muted-foreground mb-4" />
-              <h3 className="text-lg font-semibold mb-2">No hay ideas de contenido</h3>
+              <h3 className="text-lg font-semibold mb-2">{t('marketing:creator.noIdeas')}</h3>
               <p className="text-muted-foreground text-center mb-4">
-                Genera ideas con IA para comenzar a crear contenido increíble
+                {t('marketing:creator.noIdeasDesc')}
               </p>
               <Button onClick={handleGenerateIdeas} disabled={isGeneratingIdeas}>
                 <Wand2 className="w-4 h-4 mr-2" />
-                Generar Ideas Ahora
+                {t('marketing:creator.generateIdeasNow')}
               </Button>
             </CardContent>
           </Card>

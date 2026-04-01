@@ -144,7 +144,7 @@ const CompanyDashboard = () => {
         
         // Auto-redirect to activation wizard for new users (no view param specified)
         if (!viewParam && journeyStep <= 2) {
-          console.log('🚀 Nuevo usuario post-onboarding, mostrando activation wizard');
+          if (import.meta.env.DEV) console.log('🚀 Nuevo usuario post-onboarding, mostrando activation wizard');
           setActiveView('activation-wizard');
         }
         

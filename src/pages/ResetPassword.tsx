@@ -77,8 +77,8 @@ export default function ResetPassword() {
       }
 
       toast({
-        title: "¡Contraseña restablecida!",
-        description: "Tu contraseña ha sido actualizada correctamente",
+        title: t('auth:resetPassword.successTitle', '¡Contraseña restablecida!'),
+        description: t('auth:resetPassword.successDesc', 'Tu contraseña ha sido actualizada correctamente'),
       });
 
       // Redirigir al login después de un momento

@@ -265,7 +265,7 @@ export default function ContentCreatorHub({ profile, onContentPublished }: Conte
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Sparkles className="w-5 h-5" />
-            Creación Rápida
+            {t('marketing:creator.quickCreation')}
           </CardTitle>
         </CardHeader>
         <CardContent>

@@ -130,14 +130,10 @@ const CompanyDashboard = () => {
         }
         
         if (profileData) {
-          console.log('✅ Perfil cargado:', {
-            userId: profileData.user_id,
-            email: profileData.email,
-            userType: profileData.user_type
-          });
+          if (import.meta.env.DEV) console.log('✅ Perfil cargado');
           setProfile(profileData);
         } else {
-          console.log('⚠️ No se encontró perfil, usando fallback mínimo');
+          if (import.meta.env.DEV) console.log('⚠️ No se encontró perfil, usando fallback mínimo');
           setProfile({ 
             user_id: session.user.id, 
             email: session.user.email,

@@ -19,6 +19,7 @@ import { useBusinessHealth, BusinessHealthKPI, ObjectiveProgress } from "@/hooks
 import { useDepartmentUnlocking } from "@/hooks/useDepartmentUnlocking";
 import { AgentInteractionPanel } from "@/components/agents/AgentInteractionPanel";
 import { EnterpriseAutopilotWelcome } from "@/components/company/EnterpriseAutopilotWelcome";
+import { useCompany } from "@/contexts/CompanyContext";
 import { cn } from "@/lib/utils";
 
 interface BusinessHealthDashboardProps {

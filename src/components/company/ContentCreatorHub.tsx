@@ -90,8 +90,8 @@ export default function ContentCreatorHub({ profile, onContentPublished }: Conte
     setIsGeneratingIdeas(true);
     try {
       toast({
-        title: "Generando ideas",
-        description: "La IA está creando nuevas ideas de contenido...",
+        title: t('marketing:creator.generatingIdeas'),
+        description: t('marketing:creator.generatingIdeasDesc'),
       });
 
       const { data, error } = await supabase.functions.invoke('content-insights-generator', {

@@ -267,7 +267,7 @@ export default function ContentCreatorTab({ profile, topPosts, selectedPlatform,
       ) : (
         <>
           {/* Upgrade to Advanced Creator */}
-          <Card className="border-2 border-purple-200 bg-gradient-to-br from-purple-50 to-pink-50">
+          <Card className="border-2 border-purple-500/20 bg-gradient-to-br from-purple-500/5 to-pink-500/5">
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-purple-700">
                 <Brain className="h-5 w-5" />

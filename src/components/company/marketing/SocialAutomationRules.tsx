@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useTranslation } from "react-i18next";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -11,9 +11,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import {
   MessageCircle, UserPlus, AtSign, Reply, Send, PenTool,
-  Zap, Plus, Trash2, ToggleLeft, Bot, ArrowLeft
+  Zap, Plus, Trash2, Bot, ArrowLeft, Loader2
 } from "lucide-react";
 import { useMarketingStrategicBridge } from "@/hooks/useMarketingStrategicBridge";
+import { supabase } from "@/integrations/supabase/client";
 
 interface SocialAutomationRulesProps {
   companyId?: string;
@@ -50,6 +51,7 @@ export const SocialAutomationRules = ({ companyId, onBack }: SocialAutomationRul
   const { toast } = useToast();
   const { recordMarketingImpact } = useMarketingStrategicBridge(companyId);
   const [rules, setRules] = useState<AutomationRule[]>([]);
+  const [loading, setLoading] = useState(true);
   const [isCreating, setIsCreating] = useState(false);
   const [newRule, setNewRule] = useState<Partial<AutomationRule>>({
     name: "",
@@ -61,55 +63,151 @@ export const SocialAutomationRules = ({ companyId, onBack }: SocialAutomationRul
     isActive: true,
   });
 
-  const handleAddRule = () => {
-    if (!newRule.name) {
+  const loadRules = useCallback(async () => {
+    if (!companyId) { setLoading(false); return; }
+    try {
+      const { data, error } = await supabase
+        .from('social_automation_rules')
+        .select('*')
+        .eq('company_id', companyId)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      setRules((data || []).map(r => ({
+        id: r.id,
+        name: r.name,
+        trigger: r.trigger_type,
+        triggerConfig: (r.trigger_config as Record<string, string>) || {},
+        action: r.action_type,
+        actionConfig: (r.action_config as Record<string, string>) || {},
+        isActive: r.is_active,
+        platform: r.platforms?.[0] || 'all',
+      })));
+    } catch (error) {
+      console.error('Error loading automation rules:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [companyId]);
+
+  useEffect(() => {
+    loadRules();
+  }, [loadRules]);
+
+  const handleAddRule = async () => {
+    if (!newRule.name || !companyId) {
       toast({ title: t("socialAutomation.nameRequired"), variant: "destructive" });
       return;
     }
-    const rule: AutomationRule = {
-      id: crypto.randomUUID(),
-      name: newRule.name || "",
-      trigger: newRule.trigger || "new_comment",
-      triggerConfig: newRule.triggerConfig || {},
-      action: newRule.action || "ai_reply_comment",
-      actionConfig: newRule.actionConfig || {},
-      isActive: true,
-      platform: newRule.platform || "instagram",
-    };
-    setRules((prev) => [...prev, rule]);
-    setIsCreating(false);
-    setNewRule({ name: "", trigger: "new_comment", action: "ai_reply_comment", platform: "instagram", triggerConfig: {}, actionConfig: {}, isActive: true });
-    toast({ title: t("socialAutomation.ruleCreated") });
-    recordMarketingImpact({
-      eventType: 'automation_activated',
-      eventSource: 'automation_rule',
-      sourceId: rule.id,
-      dimension: 'operations',
-      evidence: { trigger: rule.trigger, action: rule.action, platform: rule.platform },
-    });
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      const { data, error } = await supabase
+        .from('social_automation_rules')
+        .insert({
+          company_id: companyId,
+          user_id: user.id,
+          name: newRule.name,
+          trigger_type: newRule.trigger || 'new_comment',
+          trigger_config: newRule.triggerConfig || {},
+          action_type: newRule.action || 'ai_reply_comment',
+          action_config: newRule.actionConfig || {},
+          is_active: true,
+          platforms: [newRule.platform || 'instagram'],
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      const rule: AutomationRule = {
+        id: data.id,
+        name: data.name,
+        trigger: data.trigger_type,
+        triggerConfig: (data.trigger_config as Record<string, string>) || {},
+        action: data.action_type,
+        actionConfig: (data.action_config as Record<string, string>) || {},
+        isActive: data.is_active,
+        platform: data.platforms?.[0] || 'all',
+      };
+
+      setRules(prev => [rule, ...prev]);
+      setIsCreating(false);
+      setNewRule({ name: "", trigger: "new_comment", action: "ai_reply_comment", platform: "instagram", triggerConfig: {}, actionConfig: {}, isActive: true });
+      toast({ title: t("socialAutomation.ruleCreated") });
+
+      recordMarketingImpact({
+        eventType: 'automation_activated',
+        eventSource: 'automation_rule',
+        sourceId: rule.id,
+        dimension: 'operations',
+        evidence: { trigger: rule.trigger, action: rule.action, platform: rule.platform },
+      });
+    } catch (error) {
+      console.error('Error creating rule:', error);
+      toast({ title: t("socialAutomation.error", "Error al crear regla"), variant: "destructive" });
+    }
   };
 
-  const toggleRule = (id: string) => {
+  const toggleRule = async (id: string) => {
     const rule = rules.find(r => r.id === id);
-    const newActive = rule ? !rule.isActive : false;
-    setRules((prev) =>
-      prev.map((r) => (r.id === id ? { ...r, isActive: newActive } : r))
-    );
-    recordMarketingImpact({
-      eventType: newActive ? 'automation_activated' : 'automation_deactivated',
-      eventSource: 'automation_rule',
-      sourceId: id,
-      dimension: 'operations',
-    });
+    if (!rule) return;
+    const newActive = !rule.isActive;
+
+    setRules(prev => prev.map(r => r.id === id ? { ...r, isActive: newActive } : r));
+
+    try {
+      const { error } = await supabase
+        .from('social_automation_rules')
+        .update({ is_active: newActive })
+        .eq('id', id);
+
+      if (error) throw error;
+
+      recordMarketingImpact({
+        eventType: newActive ? 'automation_activated' : 'automation_deactivated',
+        eventSource: 'automation_rule',
+        sourceId: id,
+        dimension: 'operations',
+      });
+    } catch (error) {
+      console.error('Error toggling rule:', error);
+      setRules(prev => prev.map(r => r.id === id ? { ...r, isActive: !newActive } : r));
+    }
   };
 
-  const deleteRule = (id: string) => {
-    setRules((prev) => prev.filter((r) => r.id !== id));
-    toast({ title: t("socialAutomation.ruleDeleted") });
+  const deleteRule = async (id: string) => {
+    const prevRules = rules;
+    setRules(prev => prev.filter(r => r.id !== id));
+
+    try {
+      const { error } = await supabase
+        .from('social_automation_rules')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+      toast({ title: t("socialAutomation.ruleDeleted") });
+    } catch (error) {
+      console.error('Error deleting rule:', error);
+      setRules(prevRules);
+      toast({ title: t("socialAutomation.error", "Error al eliminar"), variant: "destructive" });
+    }
   };
 
   const getTriggerInfo = (triggerId: string) => TRIGGERS.find((t) => t.id === triggerId);
   const getActionInfo = (actionId: string) => ACTIONS.find((a) => a.id === actionId);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

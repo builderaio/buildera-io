@@ -11,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Mail, MapPin, Clock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-
+import { supabase } from "@/integrations/supabase/client";
 
 const Contacto = () => {
   useGTM();
@@ -30,8 +30,16 @@ const Contacto = () => {
     setLoading(true);
 
     try {
-      // Send contact form via edge function or log
-      await new Promise(resolve => setTimeout(resolve, 500));
+      const { error } = await supabase
+        .from('contact_submissions')
+        .insert({
+          name: formData.name.trim(),
+          email: formData.email.trim(),
+          subject: formData.subject || 'general',
+          message: formData.message.trim(),
+        });
+
+      if (error) throw error;
 
       toast({
         title: t('common:status.success', 'Éxito'),

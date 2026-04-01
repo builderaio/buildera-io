@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
@@ -13,14 +13,13 @@ import {
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { 
-  Bell, 
   Mail, 
   Bot, 
-  BarChart3, 
   AlertTriangle,
   Save,
   Loader2
 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface NotificationSettings {
   emailSummary: boolean;
@@ -31,25 +30,64 @@ interface NotificationSettings {
   creditThreshold: number;
 }
 
+const DEFAULT_SETTINGS: NotificationSettings = {
+  emailSummary: true,
+  agentAlerts: true,
+  creditAlerts: true,
+  weeklyReports: true,
+  summaryFrequency: "weekly",
+  creditThreshold: 20,
+};
+
 const NotificationPreferences = () => {
   const { t } = useTranslation("common");
   const [saving, setSaving] = useState(false);
-  const [settings, setSettings] = useState<NotificationSettings>({
-    emailSummary: true,
-    agentAlerts: true,
-    creditAlerts: true,
-    weeklyReports: true,
-    summaryFrequency: "weekly",
-    creditThreshold: 20,
-  });
+  const [loading, setLoading] = useState(true);
+  const [settings, setSettings] = useState<NotificationSettings>(DEFAULT_SETTINGS);
+
+  useEffect(() => {
+    loadPreferences();
+  }, []);
+
+  const loadPreferences = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) { setLoading(false); return; }
+
+      const { data, error } = await supabase
+        .from('notification_preferences')
+        .select('settings')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (error) throw error;
+      if (data?.settings) {
+        setSettings({ ...DEFAULT_SETTINGS, ...(data.settings as Partial<NotificationSettings>) });
+      }
+    } catch (error) {
+      console.error('Error loading notification preferences:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleSave = async () => {
     setSaving(true);
     try {
-      // TODO: Save to database when notification_preferences table exists
-      await new Promise(resolve => setTimeout(resolve, 500));
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      const { error } = await supabase
+        .from('notification_preferences')
+        .upsert(
+          { user_id: user.id, settings: settings as any, updated_at: new Date().toISOString() },
+          { onConflict: 'user_id' }
+        );
+
+      if (error) throw error;
       toast.success(t("config.notifications.saved"));
     } catch (error) {
+      console.error('Error saving preferences:', error);
       toast.error(t("config.notifications.saveError"));
     } finally {
       setSaving(false);
@@ -62,6 +100,14 @@ const NotificationPreferences = () => {
   ) => {
     setSettings(prev => ({ ...prev, [key]: value }));
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

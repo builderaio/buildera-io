@@ -504,7 +504,7 @@ export default function SimpleContentPublisher({
 
       if (error) throw error;
 
-      console.log('Successfully published via edge function:', data);
+      if (import.meta.env.DEV) console.log('Successfully published via edge function:', data);
       
       if (publishMode === 'scheduled' && scheduledISO) {
         try {

@@ -13,7 +13,7 @@ import esErrors from '../../public/locales/es/errors.json';
 import esValidation from '../../public/locales/es/validation.json';
 import esNotifications from '../../public/locales/es/notifications.json';
 import esCreatify from '../../public/locales/es/creatify.json';
-
+import esLegal from '../../public/locales/es/legal.json';
 // EN
 import enCommon from '../../public/locales/en/common.json';
 import enCompany from '../../public/locales/en/company.json';

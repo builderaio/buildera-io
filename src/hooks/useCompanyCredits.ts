@@ -14,7 +14,7 @@ interface CreditUsage {
 
 export const useCompanyCredits = (companyId?: string, userId?: string) => {
   const [credits, setCredits] = useState<CreditUsage>({
-    totalCredits: 100, // Default credits for free tier
+    totalCredits: 100,
     usedCredits: 0,
     availableCredits: 100,
     usageHistory: []
@@ -33,21 +33,30 @@ export const useCompanyCredits = (companyId?: string, userId?: string) => {
       startOfMonth.setDate(1);
       startOfMonth.setHours(0, 0, 0, 0);
 
-      const { data: usageData, error } = await supabase
-        .from('agent_usage_log')
-        .select(`
-          credits_consumed,
-          created_at,
-          agent_id
-        `)
-        .eq('company_id', companyId)
-        .gte('created_at', startOfMonth.toISOString())
-        .order('created_at', { ascending: false });
+      // Fetch usage data and subscription plan credits in parallel
+      const [usageResult, subscriptionResult] = await Promise.all([
+        supabase
+          .from('agent_usage_log')
+          .select('credits_consumed, created_at, agent_id')
+          .eq('company_id', companyId)
+          .gte('created_at', startOfMonth.toISOString())
+          .order('created_at', { ascending: false }),
+        supabase.functions.invoke('check-subscription-status'),
+      ]);
 
-      if (error) {
-        console.error('Error fetching usage:', error);
+      if (usageResult.error) {
+        console.error('Error fetching usage:', usageResult.error);
         setLoading(false);
         return;
+      }
+
+      const usageData = usageResult.data;
+
+      // Get total credits from subscription plan
+      let totalCredits = 100; // Default fallback
+      if (subscriptionResult.data?.limits?.credits_monthly) {
+        const planCredits = subscriptionResult.data.limits.credits_monthly;
+        totalCredits = planCredits === -1 ? Infinity : planCredits;
       }
 
       // Get agent names
@@ -67,12 +76,11 @@ export const useCompanyCredits = (companyId?: string, userId?: string) => {
       }
 
       const usedCredits = usageData?.reduce((sum, log) => sum + (log.credits_consumed || 0), 0) || 0;
-      const totalCredits = 100; // TODO: Get from subscription plan
 
       setCredits({
-        totalCredits,
+        totalCredits: totalCredits === Infinity ? -1 : totalCredits,
         usedCredits,
-        availableCredits: Math.max(0, totalCredits - usedCredits),
+        availableCredits: totalCredits === Infinity ? Infinity : Math.max(0, totalCredits - usedCredits),
         usageHistory: usageData?.slice(0, 10).map(log => ({
           date: log.created_at || '',
           credits: log.credits_consumed || 0,

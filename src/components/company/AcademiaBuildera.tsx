@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -10,6 +11,7 @@ import { LearningModuleCard } from "./academy/LearningModuleCard";
 import { AITutorChat } from "./academy/AITutorChat";
 
 const AcademiaBuildera = () => {
+  const { t } = useTranslation('common');
   const { modules, userProgress, gamification, badges, loading, startModule } = useAcademyData();
   const [isTutorOpen, setIsTutorOpen] = useState(false);
   
@@ -202,8 +204,8 @@ const AcademiaBuildera = () => {
         <TabsContent value="leaderboard">
           <div className="text-center py-12">
             <Users className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
-            <h3 className="text-xl font-bold mb-2">Ranking en Desarrollo</h3>
-            <p className="text-muted-foreground">El sistema de ranking estará disponible próximamente</p>
+            <h3 className="text-xl font-bold mb-2">{t('common:academy.leaderboard.title', 'Ranking en Desarrollo')}</h3>
+            <p className="text-muted-foreground">{t('common:academy.leaderboard.comingSoon', 'El sistema de ranking estará disponible próximamente')}</p>
           </div>
         </TabsContent>
 

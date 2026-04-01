@@ -14,6 +14,7 @@ import { Lightbulb, Edit3, Sparkles, Loader2, Image as ImageIcon, Video } from "
 import { generateAIText, generateAIImage, saveInsight, saveGeneratedContent } from "@/utils/contentGeneration";
 import { SmartLoader } from "@/components/ui/smart-loader";
 import ContentImageSelector from "./ContentImageSelector";
+import { UnifiedLibrary } from "./UnifiedLibrary";
 
 interface Props {
   profile: { user_id?: string };
@@ -551,27 +552,20 @@ export default function UnifiedContentCreator({ profile, topPosts = [], selected
 
         {/* Tab 3: Biblioteca */}
         <TabsContent value="library">
-          <Card>
-            <CardContent className="pt-6">
-              <p className="text-center text-muted-foreground">Biblioteca de contenido generado (próximamente)</p>
-            </CardContent>
-          </Card>
+          <UnifiedLibrary profile={profile} />
         </TabsContent>
       </Tabs>
 
-      {/* Image Selector Dialog - Temporalmente deshabilitado */}
-      {showImageSelector && (
-        <div className="fixed inset-0 z-50 bg-background/80 flex items-center justify-center">
-          <Card className="w-full max-w-2xl">
-            <CardContent className="pt-6">
-              <p className="text-center">Selector de imágenes (próximamente)</p>
-              <Button onClick={() => setShowImageSelector(false)} className="mt-4 w-full">
-                Cerrar
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
-      )}
+      {/* Image Selector Dialog */}
+      <ContentImageSelector
+        isOpen={showImageSelector}
+        onClose={() => setShowImageSelector(false)}
+        onSelectImage={(url) => {
+          setSelectedContentImage(url);
+          setShowImageSelector(false);
+        }}
+        profile={profile}
+      />
 
       {/* Publisher Dialog */}
       <SimpleContentPublisher

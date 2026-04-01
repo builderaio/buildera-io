@@ -124,6 +124,7 @@ export const CrearContentHub = ({ profile, selectedPlatform, onNavigateTab }: Cr
       features: ["hub.crear.emailSequence.f1", "hub.crear.emailSequence.f2", "hub.crear.emailSequence.f3"],
       gradient: "from-cyan-500/10 to-blue-500/10",
       iconBg: "bg-cyan-500/10 text-cyan-600",
+      comingSoon: true,
     },
   ];
 

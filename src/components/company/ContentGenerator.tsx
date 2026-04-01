@@ -8,14 +8,13 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { EraOptimizerButton } from "@/components/ui/era-optimizer-button";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from "react-i18next";
+import { supabase } from "@/integrations/supabase/client";
 import { 
   Zap, 
   Sparkles, 
   Copy, 
-  Download, 
   Share2, 
-  Image, 
-  Video, 
   FileText,
   Loader2,
   CheckCircle2,
@@ -39,6 +38,7 @@ interface GeneratedContent {
 
 const ContentGenerator = ({ profile }: ContentGeneratorProps) => {
   const { toast } = useToast();
+  const { t } = useTranslation(['marketing', 'errors']);
   const [selectedPlatform, setSelectedPlatform] = useState<string>("");
   const [contentType, setContentType] = useState<string>("text");
   const [contentTone, setContentTone] = useState<string>("professional");
@@ -47,34 +47,34 @@ const ContentGenerator = ({ profile }: ContentGeneratorProps) => {
   const [loading, setLoading] = useState(false);
 
   const platforms = [
-    { id: 'linkedin', name: 'LinkedIn', icon: FaLinkedin, color: 'text-blue-700' },
-    { id: 'instagram', name: 'Instagram', icon: FaInstagram, color: 'text-pink-600' },
-    { id: 'tiktok', name: 'TikTok', icon: FaTiktok, color: 'text-black' },
-    { id: 'facebook', name: 'Facebook', icon: FaFacebook, color: 'text-blue-600' },
-    { id: 'twitter', name: 'Twitter/X', icon: FaXTwitter, color: 'text-black' },
-    { id: 'youtube', name: 'YouTube', icon: FaYoutube, color: 'text-red-600' },
+    { id: 'linkedin', name: 'LinkedIn', icon: FaLinkedin, color: 'text-[#0077B5]' },
+    { id: 'instagram', name: 'Instagram', icon: FaInstagram, color: 'text-[#E4405F]' },
+    { id: 'tiktok', name: 'TikTok', icon: FaTiktok, color: 'text-foreground' },
+    { id: 'facebook', name: 'Facebook', icon: FaFacebook, color: 'text-[#1877F2]' },
+    { id: 'twitter', name: 'X (Twitter)', icon: FaXTwitter, color: 'text-foreground' },
+    { id: 'youtube', name: 'YouTube', icon: FaYoutube, color: 'text-[#FF0000]' },
   ];
 
   const contentTypes = [
-    { id: 'text', label: 'Post de Texto', icon: FileText },
-    { id: 'image', label: 'Post con Imagen', icon: Image },
-    { id: 'video', label: 'Video/Reel', icon: Video },
+    { id: 'text', labelKey: 'generator.types.text', icon: FileText },
+    { id: 'image', labelKey: 'generator.types.image', icon: FileText },
+    { id: 'video', labelKey: 'generator.types.video', icon: FileText },
   ];
 
   const tones = [
-    { id: 'professional', label: 'Profesional' },
-    { id: 'casual', label: 'Casual' },
-    { id: 'enthusiastic', label: 'Entusiasta' },
-    { id: 'educational', label: 'Educativo' },
-    { id: 'humorous', label: 'Divertido' },
-    { id: 'inspirational', label: 'Inspiracional' },
+    { id: 'professional', labelKey: 'generator.tones.professional' },
+    { id: 'casual', labelKey: 'generator.tones.casual' },
+    { id: 'enthusiastic', labelKey: 'generator.tones.enthusiastic' },
+    { id: 'educational', labelKey: 'generator.tones.educational' },
+    { id: 'humorous', labelKey: 'generator.tones.humorous' },
+    { id: 'inspirational', labelKey: 'generator.tones.inspirational' },
   ];
 
   const generateContent = async () => {
     if (!prompt.trim() || !selectedPlatform) {
       toast({
-        title: "Campos requeridos",
-        description: "Selecciona una plataforma y describe qué contenido quieres generar.",
+        title: t('errors:general.title'),
+        description: t('marketing:generator.fieldsRequired'),
         variant: "destructive",
       });
       return;
@@ -83,31 +83,43 @@ const ContentGenerator = ({ profile }: ContentGeneratorProps) => {
     setLoading(true);
     
     try {
-      // Simular generación de contenido con IA
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      const mockContent: GeneratedContent = {
+      const { data, error } = await supabase.functions.invoke('generate-company-content', {
+        body: {
+          userId: profile?.user_id,
+          prompt,
+          platform: selectedPlatform,
+          contentType,
+          tone: contentTone,
+        }
+      });
+
+      if (error) throw error;
+
+      const contentText = data?.content || data?.generatedText || '';
+      const hashtags = data?.hashtags || [];
+
+      const newContent: GeneratedContent = {
         id: Date.now().toString(),
         platform: selectedPlatform,
         type: contentType as any,
-        content: generateMockContent(selectedPlatform, contentTone, prompt),
+        content: contentText,
         tone: contentTone,
-        hashtags: generateMockHashtags(selectedPlatform),
+        hashtags,
         created: new Date()
       };
 
-      setGeneratedContent(prev => [mockContent, ...prev]);
+      setGeneratedContent(prev => [newContent, ...prev]);
       
       toast({
-        title: "¡Contenido generado!",
-        description: "Tu contenido ha sido creado exitosamente.",
+        title: t('marketing:generator.generated'),
+        description: t('marketing:generator.generatedDesc'),
       });
       
       setPrompt("");
     } catch (error) {
       toast({
-        title: "Error",
-        description: "No se pudo generar el contenido. Inténtalo de nuevo.",
+        title: t('errors:general.title'),
+        description: t('marketing:generator.errorGenerating'),
         variant: "destructive",
       });
     } finally {
@@ -115,77 +127,11 @@ const ContentGenerator = ({ profile }: ContentGeneratorProps) => {
     }
   };
 
-  const generateMockContent = (platform: string, tone: string, userPrompt: string): string => {
-    const contents = {
-      linkedin: {
-        professional: `🚀 Reflexiones sobre ${userPrompt}
-
-En el panorama empresarial actual, es fundamental entender cómo ${userPrompt} puede transformar nuestros procesos y generar valor real para nuestros clientes.
-
-Algunos puntos clave:
-• Innovación constante
-• Enfoque en el cliente
-• Adaptabilidad al cambio
-
-¿Qué opinas sobre esta perspectiva? Me encantaría conocer tus experiencias.`,
-        casual: `Hey! 👋 
-
-Quería compartir algunos pensamientos sobre ${userPrompt}. Últimamente he estado reflexionando sobre esto y creo que hay oportunidades increíbles por explorar.
-
-¿Tú qué piensas? ¡Cuéntame en los comentarios!`
-      },
-      instagram: {
-        professional: `✨ ${userPrompt} ✨
-
-Descubre cómo esto puede cambiar tu perspectiva y generar un impacto positivo en tu día a día.
-
-Swipe para ver más detalles ➡️`,
-        casual: `Mood: pensando en ${userPrompt} 💭
-
-¿Alguien más está obsesionado con esto? 🙋‍♀️
-
-Stories para más contenido 👆`
-      },
-      tiktok: {
-        professional: `🎯 Todo sobre ${userPrompt}
-
-3 cosas que necesitas saber:
-1. Es tendencia por una razón
-2. Puede impactar tu rutina diaria  
-3. Vale la pena probarlo
-
-¿Ya lo intentaste? ¡Cuéntame en los comentarios! 👇`,
-        casual: `POV: cuando descubres ${userPrompt} 😍
-
-No me voy a cansar de hablar de esto tbh
-
-¿Team sí o team no? 🤔`
-      }
-    };
-
-    const platformContent = contents[platform as keyof typeof contents];
-    return platformContent?.[tone as keyof typeof platformContent] || 
-           `Contenido generado sobre ${userPrompt} con tono ${tone} para ${platform}.`;
-  };
-
-  const generateMockHashtags = (platform: string): string[] => {
-    const hashtagSets = {
-      linkedin: ['#Marketing', '#Business', '#Innovation', '#Leadership', '#Growth'],
-      instagram: ['#instagood', '#marketing', '#business', '#inspiration', '#lifestyle'],
-      tiktok: ['#fyp', '#viral', '#trending', '#business', '#tips'],
-      facebook: ['#marketing', '#business', '#social', '#growth', '#tips'],
-      twitter: ['#marketing', '#business', '#innovation', '#tech', '#growth'],
-      youtube: ['#youtube', '#content', '#marketing', '#business', '#tutorial']
-    };
-
-    return hashtagSets[platform as keyof typeof hashtagSets] || ['#content', '#marketing'];
-  };
-
   const copyToClipboard = (content: string) => {
     navigator.clipboard.writeText(content);
     toast({
-      title: "¡Copiado!",
-      description: "El contenido ha sido copiado al portapapeles.",
+      title: t('marketing:generator.copied'),
+      description: t('marketing:generator.copiedDesc'),
     });
   };
 
@@ -196,16 +142,16 @@ No me voy a cansar de hablar de esto tbh
 
   const getPlatformColor = (platformId: string) => {
     const platform = platforms.find(p => p.id === platformId);
-    return platform ? platform.color : 'text-gray-600';
+    return platform ? platform.color : 'text-muted-foreground';
   };
 
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight">Generador de Contenido IA</h2>
+          <h2 className="text-2xl font-bold tracking-tight">{t('marketing:generator.title')}</h2>
           <p className="text-muted-foreground">
-            Crea contenido optimizado para cada red social con inteligencia artificial
+            {t('marketing:generator.subtitle')}
           </p>
         </div>
         <Badge variant="secondary" className="w-fit">
@@ -214,21 +160,20 @@ No me voy a cansar de hablar de esto tbh
         </Badge>
       </div>
 
-      {/* Formulario de generación */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Zap className="h-5 w-5 text-primary" />
-            Crear Nuevo Contenido
+            {t('marketing:generator.createNew')}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="platform">Plataforma</Label>
+              <Label htmlFor="platform">{t('marketing:generator.platform')}</Label>
               <Select value={selectedPlatform} onValueChange={setSelectedPlatform}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Seleccionar plataforma" />
+                  <SelectValue placeholder={t('marketing:generator.selectPlatform')} />
                 </SelectTrigger>
                 <SelectContent>
                   {platforms.map((platform) => {
@@ -247,7 +192,7 @@ No me voy a cansar de hablar de esto tbh
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="content-type">Tipo de Contenido</Label>
+              <Label htmlFor="content-type">{t('marketing:generator.contentType')}</Label>
               <Select value={contentType} onValueChange={setContentType}>
                 <SelectTrigger>
                   <SelectValue />
@@ -259,7 +204,7 @@ No me voy a cansar de hablar de esto tbh
                       <SelectItem key={type.id} value={type.id}>
                         <div className="flex items-center gap-2">
                           <IconComponent className="h-4 w-4" />
-                          {type.label}
+                          {t(`marketing:${type.labelKey}`)}
                         </div>
                       </SelectItem>
                     );
@@ -269,7 +214,7 @@ No me voy a cansar de hablar de esto tbh
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="tone">Tono</Label>
+              <Label htmlFor="tone">{t('marketing:generator.tone')}</Label>
               <Select value={contentTone} onValueChange={setContentTone}>
                 <SelectTrigger>
                   <SelectValue />
@@ -277,7 +222,7 @@ No me voy a cansar de hablar de esto tbh
                 <SelectContent>
                   {tones.map((tone) => (
                     <SelectItem key={tone.id} value={tone.id}>
-                      {tone.label}
+                      {t(`marketing:${tone.labelKey}`)}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -287,7 +232,7 @@ No me voy a cansar de hablar de esto tbh
 
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <Label htmlFor="prompt">Describe tu contenido</Label>
+              <Label htmlFor="prompt">{t('marketing:generator.describeContent')}</Label>
               <EraOptimizerButton
                 currentText={prompt}
                 fieldType="contenido de marketing"
@@ -304,7 +249,7 @@ No me voy a cansar de hablar de esto tbh
             </div>
             <Textarea
               id="prompt"
-              placeholder="Ej: Un post sobre las ventajas de trabajar en remoto, incluyendo estadísticas y consejos prácticos..."
+              placeholder={t('marketing:generator.placeholder')}
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
               rows={4}
@@ -320,30 +265,29 @@ No me voy a cansar de hablar de esto tbh
             {loading ? (
               <>
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Generando contenido...
+                {t('marketing:generator.generating')}
               </>
             ) : (
               <>
                 <Sparkles className="h-4 w-4 mr-2" />
-                Generar Contenido con IA
+                {t('marketing:generator.generateWithAI')}
               </>
             )}
           </Button>
         </CardContent>
       </Card>
 
-      {/* Contenido generado */}
       {generatedContent.length > 0 && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold">Contenido Generado</h3>
+            <h3 className="text-lg font-semibold">{t('marketing:generator.generatedContent')}</h3>
             <Button
               variant="outline"
               size="sm"
               onClick={() => setGeneratedContent([])}
             >
               <RefreshCw className="h-4 w-4 mr-2" />
-              Limpiar Todo
+              {t('marketing:generator.clearAll')}
             </Button>
           </div>
 
@@ -360,7 +304,7 @@ No me voy a cansar de hablar de esto tbh
                         <IconComponent className={`h-5 w-5 ${getPlatformColor(content.platform)}`} />
                         <span className="font-medium">{platformName}</span>
                         <Badge variant="outline" className="text-xs">
-                          {content.tone}
+                          {t(`marketing:generator.tones.${content.tone}`, content.tone)}
                         </Badge>
                       </div>
                       <div className="flex items-center gap-1">
@@ -382,24 +326,26 @@ No me voy a cansar de hablar de esto tbh
                       <p className="text-sm whitespace-pre-wrap">{content.content}</p>
                     </div>
                     
-                    <div className="space-y-2">
-                      <Label className="text-xs font-medium">Hashtags sugeridos:</Label>
-                      <div className="flex flex-wrap gap-1">
-                        {content.hashtags.map((hashtag, index) => (
-                          <Badge key={index} variant="secondary" className="text-xs">
-                            {hashtag}
-                          </Badge>
-                        ))}
+                    {content.hashtags.length > 0 && (
+                      <div className="space-y-2">
+                        <Label className="text-xs font-medium">{t('marketing:generator.suggestedHashtags')}</Label>
+                        <div className="flex flex-wrap gap-1">
+                          {content.hashtags.map((hashtag, index) => (
+                            <Badge key={index} variant="secondary" className="text-xs">
+                              {hashtag}
+                            </Badge>
+                          ))}
+                        </div>
                       </div>
-                    </div>
+                    )}
 
                     <Separator />
 
                     <div className="flex items-center justify-between text-xs text-muted-foreground">
-                      <span>Generado {content.created.toLocaleTimeString()}</span>
+                      <span>{t('marketing:generator.generatedAt')} {content.created.toLocaleTimeString()}</span>
                       <div className="flex items-center gap-1">
                         <CheckCircle2 className="h-3 w-3 text-green-600" />
-                        <span>Listo para publicar</span>
+                        <span>{t('marketing:generator.readyToPublish')}</span>
                       </div>
                     </div>
                   </CardContent>

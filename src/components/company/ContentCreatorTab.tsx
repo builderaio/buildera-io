@@ -527,7 +527,7 @@ export default function ContentCreatorTab({ profile, topPosts, selectedPlatform,
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {/* Hashtags Section */}
-              <div className="space-y-3 p-4 rounded-xl bg-white/50 backdrop-blur-sm border border-primary/10 hover:border-primary/30 transition-colors duration-300">
+              <div className="space-y-3 p-4 rounded-xl bg-card/50 backdrop-blur-sm border border-primary/10 hover:border-primary/30 transition-colors duration-300">
                 <div className="flex items-center gap-2 mb-3">
                   <div className="w-2 h-2 bg-primary rounded-full animate-pulse"></div>
                   <h4 className="font-semibold text-primary">Hashtags Exitosos</h4>

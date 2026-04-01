@@ -145,14 +145,22 @@ export const CrearContentHub = ({ profile, selectedPlatform, onNavigateTab }: Cr
           return (
             <Card
               key={path.id}
-              className={`group cursor-pointer border-2 hover:border-primary/40 hover:shadow-lg transition-all duration-300 bg-gradient-to-br ${path.gradient}`}
-              onClick={() => setActivePath(path.id)}
+              className={`group cursor-pointer border-2 hover:border-primary/40 hover:shadow-lg transition-all duration-300 bg-gradient-to-br ${path.gradient} ${(path as any).comingSoon ? 'opacity-75' : ''}`}
+              onClick={() => {
+                if ((path as any).comingSoon) return;
+                setActivePath(path.id);
+              }}
             >
               <CardHeader>
                 <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${path.iconBg} mb-3`}>
                   <Icon className="h-6 w-6" />
                 </div>
-                <CardTitle className="text-lg">{t(path.titleKey)}</CardTitle>
+                <div className="flex items-center gap-2">
+                  <CardTitle className="text-lg">{t(path.titleKey)}</CardTitle>
+                  {(path as any).comingSoon && (
+                    <Badge variant="secondary" className="text-xs">{t("hub.crear.comingSoon", "Próximamente")}</Badge>
+                  )}
+                </div>
                 <CardDescription>{t(path.descKey)}</CardDescription>
               </CardHeader>
               <CardContent>
@@ -167,8 +175,9 @@ export const CrearContentHub = ({ profile, selectedPlatform, onNavigateTab }: Cr
                 <Button
                   variant="outline"
                   className="w-full mt-4 group-hover:bg-primary group-hover:text-primary-foreground transition-colors"
+                  disabled={(path as any).comingSoon}
                 >
-                  {t("hub.crear.start")}
+                  {(path as any).comingSoon ? t("hub.crear.comingSoon", "Próximamente") : t("hub.crear.start")}
                 </Button>
               </CardContent>
             </Card>

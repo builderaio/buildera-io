@@ -599,7 +599,7 @@ export default function SimpleContentPublisher({
     } catch (error: any) {
       console.error('Error publishing content:', error);
       toast({
-        title: 'Error',
+        title: t("errors:general.title"),
         description: error.message || t('publisher.publishError', 'No se pudo publicar el contenido'),
         variant: 'destructive'
       });

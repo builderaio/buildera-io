@@ -409,7 +409,7 @@ export default function ContentCreatorHub({ profile, onContentPublished }: Conte
               ) : (
                 <Wand2 className="w-4 h-4" />
               )}
-              Generar Ideas
+              {t('marketing:creator.generateIdeas')}
             </Button>
           </div>
         </div>

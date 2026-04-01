@@ -52,8 +52,8 @@ const CompanyDashboard = () => {
     initializedRef.current = true;
     
     const checkAuth = async () => {
-      console.group('🔐 [CompanyDashboard] checkAuth');
-      console.log('Timestamp:', new Date().toISOString());
+      if (import.meta.env.DEV) console.group('🔐 [CompanyDashboard] checkAuth');
+      if (import.meta.env.DEV) console.log('Timestamp:', new Date().toISOString());
       
       const { data: { session } } = await supabase.auth.getSession();
       

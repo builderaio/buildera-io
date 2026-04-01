@@ -14,6 +14,7 @@ import { Lightbulb, Edit3, Sparkles, Loader2, Image as ImageIcon, Video } from "
 import { generateAIText, generateAIImage, saveInsight, saveGeneratedContent } from "@/utils/contentGeneration";
 import { SmartLoader } from "@/components/ui/smart-loader";
 import ContentImageSelector from "./ContentImageSelector";
+import { UnifiedLibrary } from "./UnifiedLibrary";
 
 interface Props {
   profile: { user_id?: string };

@@ -622,15 +622,15 @@ export default function ContentCreatorTab({ profile, topPosts, selectedPlatform,
             </div>
 
             {/* Additional Insight */}
-            <div className="mt-6 p-4 rounded-lg bg-gradient-to-r from-blue-50/50 to-purple-50/50 border border-blue-200/30">
+            <div className="mt-6 p-4 rounded-lg bg-gradient-to-r from-blue-500/5 to-purple-500/5 border border-blue-500/10">
               <div className="flex items-start gap-3">
-                <Lightbulb className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                <Lightbulb className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
                 <div>
-                  <p className="text-sm font-medium text-blue-900 mb-1">
+                  <p className="text-sm font-medium text-foreground mb-1">
                     💡 Consejo: Usa estos datos para tu próximo contenido
                   </p>
-                  <p className="text-xs text-blue-700">
-                    Los hashtags y formatos mostrados aquí son los que han generado mayor engagement. 
+                  <p className="text-xs text-muted-foreground">
+                    Los hashtags y formatos mostrados aquí son los que han generado mayor engagement.
                     Considera incorporarlos en tu siguiente publicación para maximizar el alcance.
                   </p>
                 </div>

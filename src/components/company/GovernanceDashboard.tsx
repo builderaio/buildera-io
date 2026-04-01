@@ -107,7 +107,7 @@ const GovernanceDashboard = ({ profile }: GovernanceDashboardProps) => {
 
     // Map departments
     const deptConfigs = deptsRes.data || [];
-    const deptKeys = ["marketing", "sales", "legal", "hr", "customer_service", "finance"];
+    const deptKeys = ["marketing", "sales", "legal", "hr", "operations", "finance"];
     const todayDecisions = (decisionsRes.data || []).filter((d: any) => {
       const created = new Date(d.created_at);
       return created.toDateString() === new Date().toDateString();

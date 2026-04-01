@@ -471,6 +471,10 @@ export function AutopilotDashboard({ companyId, profile }: AutopilotDashboardPro
         <p className="text-muted-foreground text-sm text-center max-w-md">
           {t('autopilot.emptyDescription', 'Aún no tienes configuración de Autopilot. Activa el piloto automático para que la IA gestione tus publicaciones y decisiones de marketing.')}
         </p>
+        <Button onClick={toggleAutopilot} disabled={saving} className="mt-2">
+          <Zap className="w-4 h-4 mr-2" />
+          {t('autopilot.activateNow', 'Activar Autopilot')}
+        </Button>
       </div>
     );
   }

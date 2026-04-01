@@ -58,8 +58,8 @@ const CompanyDashboard = () => {
       const { data: { session } } = await supabase.auth.getSession();
       
       if (!session?.user) {
-        console.log('❌ No session found');
-        console.groupEnd();
+        if (import.meta.env.DEV) console.log('❌ No session found');
+        if (import.meta.env.DEV) console.groupEnd();
         navigate('/auth');
         return;
       }

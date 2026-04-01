@@ -271,8 +271,8 @@ export default function ContentCreatorHub({ profile, onContentPublished }: Conte
         <CardContent>
           <Tabs value={creationMode} onValueChange={(v) => setCreationMode(v as 'ai' | 'manual')}>
             <TabsList className="grid w-full grid-cols-2 mb-4">
-              <TabsTrigger value="ai">Con IA</TabsTrigger>
-              <TabsTrigger value="manual">Manual</TabsTrigger>
+              <TabsTrigger value="ai">{t('marketing:creator.withAI')}</TabsTrigger>
+              <TabsTrigger value="manual">{t('marketing:creator.manual')}</TabsTrigger>
             </TabsList>
 
             <TabsContent value="ai" className="space-y-4">

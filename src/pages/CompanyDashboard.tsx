@@ -225,7 +225,7 @@ const CompanyDashboard = () => {
         }
 
         profileData = newProfile;
-        console.log('✅ Perfil creado exitosamente');
+        if (import.meta.env.DEV) console.log('✅ Perfil creado exitosamente');
         toast({
           title: t('company:toast.profileCreated'),
           description: t('company:toast.profileCreatedDesc'),

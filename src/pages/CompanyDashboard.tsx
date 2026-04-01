@@ -73,7 +73,7 @@ const CompanyDashboard = () => {
       if (import.meta.env.DEV) console.log('📍 URL params:', { viewParam, onboardingCompletedParam });
       
       if (viewParam === 'onboarding') {
-        console.log('🔄 Showing onboarding orchestrator');
+        if (import.meta.env.DEV) console.log('🔄 Showing onboarding orchestrator');
         setActiveView('onboarding');
         setLoading(false);
         console.groupEnd();

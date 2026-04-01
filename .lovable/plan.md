@@ -1,139 +1,122 @@
 
 
-# Funcionalidades con Código Mock/Predefinido — Análisis Detallado
+# Dashboard Loop Diagnosis for mdelatorrep@gmail.com
 
-## Hallazgos organizados por severidad
+## User Data State (healthy, not the cause)
+- `user_id`: `9146aff2-d0b3-4cc6-8878-02e9d08f634b`
+- Onboarding: completed (step 5/5, journey completed)
+- Profile: exists, `user_type = 'company'`, `full_name` set
+- Company: exists with `journey_current_step = 5`
 
----
+No redirect loop exists — the routing logic correctly lands on `mando-central`. The problem is a **performance death spiral** caused by massive query duplication on mount.
 
-### SEVERIDAD CRÍTICA — Funcionalidad que aparenta funcionar pero no hace nada real
+## Root Cause: ~60 parallel queries on every dashboard load
 
-**1. Contacto.tsx — Formulario simulado, no envía emails**
-- Línea 34: `await new Promise(resolve => setTimeout(resolve, 500))` — simula envío
-- Muestra toast de éxito pero el mensaje del usuario se pierde completamente
-- No invoca ninguna edge function ni sistema de email interno
-- **Impacto**: Los leads/contactos de usuarios potenciales se pierden
+When the dashboard loads, `ResponsiveLayout` and `BusinessHealthDashboard` both independently call the same hooks:
 
-**2. NotificationPreferences.tsx — Guardar preferencias es falso**
-- Línea 49-50: `// TODO: Save to database when notification_preferences table exists` seguido de `setTimeout(500ms)`
-- Muestra "Guardado exitosamente" pero no persiste nada — las preferencias se resetean al recargar
-- **Impacto**: El usuario cree que configuró sus notificaciones pero nada funciona
+```text
+ResponsiveLayout                    BusinessHealthDashboard
+├── useCompanyCredits ──────────┐   ├── useCompanyCredits ────────┐
+│   └── check-subscription-status   │   └── check-subscription-status
+│       (edge function call)        │       (DUPLICATE edge call)
+├── useCompanyState ────────────┐   ├── useCompanyState ──────────┐
+│   └── 14 parallel DB queries  │   │   └── 14 parallel DB queries
+│       (SAME queries)          │   │       (DUPLICATE 14 queries)
+├── usePlatformAgents           │   ├── usePlatformAgents (DUP)
+├── useDepartmentUnlocking      │   ├── useDepartmentUnlocking (DUP)
+├── useJourneyProgression       │   ├── useNextBestAction
+│   └── checkAndAdvance         │   └── useBusinessHealth
+│       6 queries (pointless    │       more queries...
+│       at step 5)              │
+└── checkOnboardingStatus       │
+    2 queries                   │
+```
 
-**3. MarketingCalendar.tsx — 100% datos mock, sin conexión a DB**
-- Líneas 40-66: Array hardcodeado con 3 posts ficticios (fechas de enero 2024)
-- No consulta `social_posts` ni `calendar_items` ni ninguna tabla real
-- No tiene `useTranslation` — todo hardcodeado en español
-- Dark mode roto (`bg-blue-100 text-blue-800`, etc.)
-- **Nota**: No se importa desde ningún componente activo — posible código muerto
+**Evidence**: Edge function logs show `check-subscription-status` called 8+ times in 30 seconds after login. Auth logs show 10+ `/user` requests within seconds.
 
-**4. SocialAutomationRules.tsx — Reglas solo en memoria (useState)**
-- Líneas 52-62: Las reglas de automatización se guardan en `useState<AutomationRule[]>([])` local
-- No hay `useEffect` para cargar ni `supabase` para guardar
-- Al recargar la página, todas las reglas desaparecen
-- **Impacto**: El usuario crea reglas de automatización que nunca se ejecutan ni persisten
+**Additional issue**: `useDashboardMetrics` (used by `Dashboard360`) has no metrics data for this user and no `calculate-dashboard-metrics` edge function deployed. If this component ever mounts, it would call a non-existent edge function, fail silently, and the metrics stay null — but the guard `calculating` prevents an actual infinite loop.
 
-**5. useCompanyCredits.ts — Límite de créditos hardcodeado**
-- Línea 70: `const totalCredits = 100; // TODO: Get from subscription plan`
-- Todo usuario ve "100 créditos" independientemente de su plan de suscripción
-- No hay tabla ni lógica para obtener créditos reales del plan
+## Fix Plan (4 steps)
 
-**6. UnifiedContentCreator.tsx — Biblioteca y Selector de imágenes son stubs**
-- Línea 556: Tab "Biblioteca" muestra solo `"Biblioteca de contenido generado (próximamente)"`
-- Línea 567: Selector de imágenes muestra solo `"Selector de imágenes (próximamente)"` con botón "Cerrar"
-- Strings hardcodeadas en español sin i18n
+### Step 1: Skip journey checks when already at step 5
+In `ResponsiveLayout.tsx`, the `useEffect` at line ~388 calls `checkAndAdvance()` on every mount, running 6 DB queries even though the user is at step 5. Add an early return.
 
----
+```typescript
+// In the useEffect that calls fetchAndAdvance:
+const fetchAndAdvance = async () => {
+  const { data } = await supabase
+    .from('companies')
+    .select('journey_current_step')
+    .eq('id', companyId)
+    .maybeSingle();
+  
+  const step = data?.journey_current_step || 1;
+  setJourneyStep(step);
+  
+  // Only run checkAndAdvance if not yet completed
+  if (step < 5) {
+    await checkAndAdvance();
+  }
+};
+```
 
-### SEVERIDAD ALTA — Funcionalidad parcialmente implementada
+Also add the same guard inside `useJourneyProgression.checkAndAdvance`:
+```typescript
+// Fetch current step first; skip if already at 5
+const { data: company } = await supabase
+  .from('companies')
+  .select('journey_current_step')
+  .eq('id', companyId)
+  .single();
+if (company?.journey_current_step >= 5) return;
+```
 
-**7. AcademiaBuildera.tsx — Tab "Leaderboard" es placeholder**
-- Líneas 202-207: Muestra "Ranking en Desarrollo" con texto "estará disponible próximamente"
-- Hardcodeado en español sin i18n
-- El resto de la Academia (módulos, badges, tutor IA) sí funciona con datos reales
+### Step 2: Deduplicate hooks via CompanyContext
+The `CompanyContext` already exists but `ResponsiveLayout` and `BusinessHealthDashboard` both independently call `useCompanyState`, `useCompanyCredits`, `usePlatformAgents`, and `useDepartmentUnlocking`. 
 
-**8. InteligenciaHub.tsx — Tab "Mercado" es placeholder**
-- Líneas 176-189: Muestra "Próximamente" con descripción genérica
-- Las otras tabs (Diagnóstico, Competidores) sí funcionan
+- Move `useCompanyCredits` and `useCompanyState` results into `CompanyContext` (or a new `DashboardDataContext`)
+- Both `ResponsiveLayout` and `BusinessHealthDashboard` consume from context instead of calling hooks independently
+- This eliminates ~30 duplicate queries per page load
 
-**9. MarketingMetrics.tsx — Gráfico de rendimiento semanal es placeholder**
-- Líneas 497-504: Muestra "Gráfico de rendimiento semanal — Próximamente: Integración con Chart.js"
-- El componente ya importa datos reales de Supabase para las métricas numéricas, pero el chart visual es un stub
-- **Nota**: Parece no estar importado activamente (posible código muerto)
+### Step 3: Cache `check-subscription-status` results
+In `useCompanyCredits.ts`, the edge function is called on every mount with no caching. Add a session-level cache:
 
-**10. SocialMediaPreview.tsx — Usa imagen dummy de Unsplash**
-- Línea 73: `dummyImage = "https://images.unsplash.com/photo-..."` — se usa como fallback cuando no hay media
-- Línea 172: `mockUser = getUserData()` — datos de usuario simulados para la preview social
-- Esto es aceptable como fallback visual pero depende de un servicio externo (Unsplash)
+```typescript
+const CACHE_KEY = 'subscription-status-cache';
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
-**11. AutonomyDashboardPreview.tsx — 100% mock (intencional)**
-- Líneas 21-56: Datos estáticos de departamentos, aprobaciones, guardrails, logs, capacidades
-- Es un componente de la landing page (`Index.tsx`) — diseñado para ser una preview visual
-- **Veredicto**: Correcto como está. Es marketing, no funcionalidad real
+// Check cache before calling edge function
+const cached = sessionStorage.getItem(CACHE_KEY);
+if (cached) {
+  const { data, timestamp } = JSON.parse(cached);
+  if (Date.now() - timestamp < CACHE_TTL) {
+    // Use cached data instead of calling edge function
+    return data;
+  }
+}
+```
 
----
+### Step 4: Guard `useDashboardMetrics` auto-calculate
+Add a `hasAttemptedCalculation` ref to prevent repeated attempts when the edge function doesn't exist:
 
-### SEVERIDAD MEDIA — Código muerto o no conectado
+```typescript
+const hasAttemptedRef = useRef(false);
 
-**12. MarketingCalendar.tsx — Probablemente código muerto**
-- No se importa desde ningún archivo activo
-- Duplica funcionalidad de `ContentCalendar.tsx` que sí está integrado en el Marketing Hub
+useEffect(() => {
+  if (!loading && userId && !hasAttemptedRef.current && 
+      (!metrics || isDataOld(metrics.last_calculated_at))) {
+    hasAttemptedRef.current = true;
+    calculateMetrics();
+  }
+}, [loading, userId, metrics]);
+```
 
-**13. MarketingMetrics.tsx — Probablemente código muerto**
-- No se importa desde ningún componente activo
-- Duplica funcionalidad del overview del Marketing Hub
+## Expected Impact
 
-**14. MarketingHubInsights.tsx — Código muerto**
-- No se importa desde ningún archivo
-- 1078 líneas de código no utilizado
-
----
-
-## Plan de Corrección (6 pasos)
-
-### Paso 1: Conectar Contacto.tsx al sistema de email interno
-- Reemplazar el `setTimeout` mock por una invocación a una edge function de email
-- Usar el sistema de email propietario de Buildera (según las instrucciones del proyecto)
-- Guardar el contacto en una tabla `contact_submissions` para seguimiento
-
-### Paso 2: Crear tabla y conectar NotificationPreferences
-- Crear migración para tabla `notification_preferences` (user_id, settings jsonb)
-- Reemplazar el `setTimeout` por `supabase.from('notification_preferences').upsert()`
-- Cargar preferencias guardadas al montar el componente
-
-### Paso 3: Persistir SocialAutomationRules en base de datos
-- Crear tabla `social_automation_rules` (id, company_id, name, trigger, action, config, is_active)
-- Agregar `loadRules()` en `useEffect` y `saveRule()` en handlers
-- Las reglas deben persistir entre sesiones
-
-### Paso 4: Hacer dinámico el límite de créditos
-- Crear lógica para obtener créditos del plan de suscripción del usuario
-- Reemplazar `const totalCredits = 100` por consulta real a la tabla de suscripciones/planes
-
-### Paso 5: Eliminar componentes muertos
-- Eliminar `MarketingCalendar.tsx` (367 líneas — duplicado por ContentCalendar)
-- Eliminar `MarketingHubInsights.tsx` (1078 líneas — no importado)
-- Verificar `MarketingMetrics.tsx` y eliminar si confirma que no se usa
-
-### Paso 6: Resolver stubs "próximamente" en componentes activos
-- `UnifiedContentCreator.tsx`: Conectar tab Biblioteca con `UnifiedLibrary` existente; conectar selector de imágenes con `ContentImageSelector` existente
-- `AcademiaBuildera.tsx`: Implementar leaderboard con datos de `user_learning_progress` o mostrar un coming soon con i18n correcto
-- `MarketingMetrics.tsx` (si se mantiene): Integrar Recharts para el gráfico semanal (ya se usa en UTMDashboard)
-
----
-
-## Resumen
-
-| # | Componente | Problema | Severidad |
-|---|-----------|----------|-----------|
-| 1 | Contacto.tsx | Formulario no envía nada | Crítica |
-| 2 | NotificationPreferences.tsx | No persiste preferencias | Crítica |
-| 3 | MarketingCalendar.tsx | 100% mock + código muerto | Crítica/Muerto |
-| 4 | SocialAutomationRules.tsx | Reglas solo en memoria | Crítica |
-| 5 | useCompanyCredits.ts | Créditos hardcodeados en 100 | Crítica |
-| 6 | UnifiedContentCreator.tsx | 2 tabs son stubs | Alta |
-| 7 | AcademiaBuildera.tsx | Leaderboard placeholder | Alta |
-| 8 | InteligenciaHub.tsx | Tab Mercado placeholder | Alta |
-| 9 | MarketingMetrics.tsx | Chart stub + posible muerto | Alta |
-| 10 | SocialMediaPreview.tsx | Imagen fallback externa | Media |
-| 11 | MarketingHubInsights.tsx | Código muerto (1078 líneas) | Media |
+| Metric | Before | After |
+|--------|--------|-------|
+| DB queries on load | ~60 | ~20 |
+| Edge function calls | 8+ | 1 (cached) |
+| Journey check queries | 6 (pointless) | 0 |
+| Duplicate hook instances | 4 hooks x2 | 0 |
 

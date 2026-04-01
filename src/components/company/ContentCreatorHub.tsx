@@ -105,8 +105,8 @@ export default function ContentCreatorHub({ profile, onContentPublished }: Conte
       if (error) throw error;
 
       toast({
-        title: "¡Ideas generadas!",
-        description: `Se generaron ${data?.count || 0} nuevas ideas de contenido`,
+        title: t('marketing:creator.ideasGenerated'),
+        description: t('marketing:creator.ideasGeneratedDesc', { count: data?.count || 0 }),
       });
 
       await loadContentIdeas();

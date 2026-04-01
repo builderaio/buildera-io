@@ -197,7 +197,7 @@ const CompanyDashboard = () => {
         .maybeSingle();
 
       if (!profileData) {
-        console.log('⚠️ No se encontró perfil, creando uno nuevo para empresa...');
+        if (import.meta.env.DEV) console.log('⚠️ No se encontró perfil, creando uno nuevo...');
         
         const { data: newProfile, error: insertError } = await supabase
           .from('profiles')

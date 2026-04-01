@@ -243,7 +243,7 @@ const CompanyDashboard = () => {
       }
 
       if (profileData && profileData.user_type !== 'company') {
-        console.log('❌ Usuario no es de tipo empresa, redirigiendo');
+        if (import.meta.env.DEV) console.log('❌ Usuario no es de tipo empresa, redirigiendo');
         toast({
           title: t('company:errors.accessDenied'),
           description: t('company:errors.companyOnly'),

@@ -11,6 +11,7 @@ import { LearningModuleCard } from "./academy/LearningModuleCard";
 import { AITutorChat } from "./academy/AITutorChat";
 
 const AcademiaBuildera = () => {
+  const { t } = useTranslation('common');
   const { modules, userProgress, gamification, badges, loading, startModule } = useAcademyData();
   const [isTutorOpen, setIsTutorOpen] = useState(false);
   

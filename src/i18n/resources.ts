@@ -28,7 +28,7 @@ import enErrors from '../../public/locales/en/errors.json';
 import enValidation from '../../public/locales/en/validation.json';
 import enNotifications from '../../public/locales/en/notifications.json';
 import enCreatify from '../../public/locales/en/creatify.json';
-
+import enLegal from '../../public/locales/en/legal.json';
 // PT
 import ptCommon from '../../public/locales/pt/common.json';
 import ptCompany from '../../public/locales/pt/company.json';

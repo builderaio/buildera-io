@@ -52,8 +52,8 @@ export default function ResetPassword() {
     try {
       if (password.length < 6) {
         toast({
-          title: "Error",
-          description: "La contraseña debe tener al menos 6 caracteres",
+          title: t('errors:general.title'),
+          description: t('auth:resetPassword.minLength', 'La contraseña debe tener al menos 6 caracteres'),
           variant: "destructive",
         });
         return;

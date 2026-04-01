@@ -19,7 +19,7 @@ const DEPT_ICONS: Record<string, any> = {
   sales: TrendingUp,
   legal: Scale,
   hr: Users,
-  customer_service: HeadphonesIcon,
+  operations: Settings2,
   finance: BarChart3,
 };
 

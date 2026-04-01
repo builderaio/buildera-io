@@ -624,9 +624,9 @@ export function AutopilotDashboard({ companyId, profile }: AutopilotDashboardPro
                               <Badge variant="outline" className="text-xs">{decision.decision_type}</Badge>
                               {decision.guardrail_result && (
                                 <Badge className={`text-xs ${
-                                  decision.guardrail_result === 'passed' ? 'bg-green-100 text-green-700' :
-                                  decision.guardrail_result === 'blocked' ? 'bg-red-100 text-red-700' :
-                                  'bg-yellow-100 text-yellow-700'
+                                  decision.guardrail_result === 'passed' ? 'bg-green-500/10 text-green-500' :
+                                  decision.guardrail_result === 'blocked' ? 'bg-red-500/10 text-red-500' :
+                                  'bg-yellow-500/10 text-yellow-500'
                                 }`}>
                                   {decision.guardrail_result === 'passed' && <CheckCircle className="w-3 h-3 mr-1" />}
                                   {decision.guardrail_result === 'blocked' && <XCircle className="w-3 h-3 mr-1" />}

@@ -570,7 +570,7 @@ export default function SimpleContentPublisher({
         }
       }
       
-      console.log('📊 Content tracking:', { source, contentIdeaId, generatedContentId, publishMode });
+      if (import.meta.env.DEV) console.log('📊 Content tracking:', { source, contentIdeaId, generatedContentId, publishMode });
       
       onSuccess?.();
       onClose();

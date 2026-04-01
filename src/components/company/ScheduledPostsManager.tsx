@@ -188,8 +188,8 @@ export const ScheduledPostsManager = ({ profile, onPostsUpdated }: ScheduledPost
     } catch (error) {
       console.error('Error canceling post:', error);
       toast({
-        title: "Error",
-        description: "No se pudo cancelar la publicación",
+        title: t('errors:general.title'),
+        description: t('marketing:scheduled.cancelError'),
         variant: "destructive"
       });
     } finally {

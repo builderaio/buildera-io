@@ -419,7 +419,7 @@ export default function ContentCreatorHub({ profile, onContentPublished }: Conte
             <CardContent className="flex items-center justify-center py-12">
               <div className="flex items-center gap-3">
                 <Loader2 className="w-6 h-6 animate-spin text-primary" />
-                <span className="text-muted-foreground">Cargando ideas de contenido...</span>
+                <span className="text-muted-foreground">{t('marketing:creator.loadingIdeas')}</span>
               </div>
             </CardContent>
           </Card>

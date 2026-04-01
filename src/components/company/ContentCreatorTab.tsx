@@ -390,7 +390,7 @@ export default function ContentCreatorTab({ profile, topPosts, selectedPlatform,
                   disabled={isOptimizing || !manualContent.trim()}
                   size="lg"
                   variant="outline"
-                  className="border-2 border-purple-200 text-purple-700 hover:bg-purple-50 hover:border-purple-400 transition-all duration-300"
+                  className="border-2 border-purple-500/20 text-foreground hover:bg-purple-500/10 hover:border-purple-500/40 transition-all duration-300"
                 >
                   {isOptimizing ? (
                     <>

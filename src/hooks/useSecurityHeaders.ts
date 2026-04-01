@@ -108,7 +108,7 @@ export const useSecureErrorHandler = () => {
  * HTTPS validation in production
  */
 export const validateSecureConnection = () => {
-  if (process.env.NODE_ENV === 'production' && location.protocol !== 'https:') {
+  if (import.meta.env.PROD && location.protocol !== 'https:') {
     logSecurityEvent({
       type: 'suspicious_activity',
       details: { 

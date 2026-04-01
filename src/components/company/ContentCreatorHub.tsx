@@ -220,8 +220,8 @@ export default function ContentCreatorHub({ profile, onContentPublished }: Conte
         .eq('id', ideaId);
 
       toast({
-        title: "Idea completada",
-        description: "La idea ha sido marcada como completada"
+        title: t('marketing:creator.ideaCompleted'),
+        description: t('marketing:creator.ideaCompletedDesc')
       });
 
       await loadContentIdeas();

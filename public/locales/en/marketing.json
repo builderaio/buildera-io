@@ -196,6 +196,8 @@
     "tabs": {
       "dashboard": "Dashboard",
       "create": "Create",
+      "createPublish": "Create + Publish",
+      "inicio": "Home",
       "campaigns": "Campaigns",
       "listening": "Listening",
       "utm": "Attribution",
@@ -205,6 +207,14 @@
       "autopilot": "Autopilot",
       "calendar": "Calendar",
       "library": "Library"
+    },
+    "advancedTools": {
+      "title": "Advanced Tools",
+      "library": "Library",
+      "reports": "Reports",
+      "listening": "Social Listening",
+      "attribution": "UTM Attribution",
+      "automation": "Automation Rules"
     },
     "metrics": {
       "insights": "Insights Generated",

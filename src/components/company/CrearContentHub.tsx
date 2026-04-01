@@ -1,15 +1,19 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { 
-  PenTool, Megaphone, Video, ArrowLeft, Sparkles, Link2, Mail
-} from "lucide-react";
+import { ArrowLeft, Calendar, ChevronDown, ChevronUp, Wrench } from "lucide-react";
 import ContentCreatorTab from "./ContentCreatorTab";
+import ContentCalendar from "./ContentCalendar";
 import { CampaignDashboard } from "./campaign/CampaignDashboard";
 import { CreatifyStudio } from "./creatify/CreatifyStudio";
 import { SmartLinkBuilder } from "./marketing/SmartLinkBuilder";
+import { UnifiedLibrary } from "./UnifiedLibrary";
+import { ReportBuilder } from "./marketing/ReportBuilder";
+import { SocialListeningPanel } from "./marketing/SocialListeningPanel";
+import { UTMDashboard } from "./marketing/UTMDashboard";
+import { SocialAutomationRules } from "./marketing/SocialAutomationRules";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface CrearContentHubProps {
   profile: any;
@@ -17,173 +21,110 @@ interface CrearContentHubProps {
   onNavigateTab: (tab: string) => void;
 }
 
-type CreationPath = null | "quick-post" | "campaign" | "creative-studio" | "smart-links" | "email-sequence";
+type ActiveView = null | "campaign" | "creative-studio" | "smart-links" | "library" | "reports" | "listening" | "utm" | "automation";
+
+const ADVANCED_TOOLS = [
+  { id: "campaign" as ActiveView, labelKey: "hub.crear.campaign.title", icon: "🎯" },
+  { id: "creative-studio" as ActiveView, labelKey: "hub.crear.studio.title", icon: "🎬" },
+  { id: "smart-links" as ActiveView, labelKey: "hub.crear.smartLinks.title", icon: "🔗" },
+  { id: "library" as ActiveView, labelKey: "hub.advancedTools.library", icon: "📚" },
+  { id: "reports" as ActiveView, labelKey: "hub.advancedTools.reports", icon: "📊" },
+  { id: "listening" as ActiveView, labelKey: "hub.advancedTools.listening", icon: "👂" },
+  { id: "utm" as ActiveView, labelKey: "hub.advancedTools.attribution", icon: "🏷️" },
+  { id: "automation" as ActiveView, labelKey: "hub.advancedTools.automation", icon: "⚙️" },
+];
 
 export const CrearContentHub = ({ profile, selectedPlatform, onNavigateTab }: CrearContentHubProps) => {
   const { t } = useTranslation("marketing");
-  const [activePath, setActivePath] = useState<CreationPath>(null);
+  const [activeView, setActiveView] = useState<ActiveView>(null);
+  const [advancedOpen, setAdvancedOpen] = useState(false);
+  const [mainView, setMainView] = useState<"create" | "calendar">("create");
 
-  if (activePath === "quick-post") {
+  // Render advanced tool views with back button
+  if (activeView) {
+    const renderView = () => {
+      switch (activeView) {
+        case "campaign": return <CampaignDashboard />;
+        case "creative-studio": return <CreatifyStudio />;
+        case "smart-links": return <SmartLinkBuilder companyId={profile?.company_id || ""} onBack={() => setActiveView(null)} />;
+        case "library": return <UnifiedLibrary profile={profile} />;
+        case "reports": return <ReportBuilder profile={profile} companyId={profile?.company_id} />;
+        case "listening": return <SocialListeningPanel profile={profile} companyId={profile?.company_id} />;
+        case "utm": return <UTMDashboard companyId={profile?.company_id} />;
+        case "automation": return <SocialAutomationRules companyId={profile?.company_id} />;
+        default: return null;
+      }
+    };
+
     return (
       <div className="space-y-4">
-        <Button variant="ghost" size="sm" onClick={() => setActivePath(null)}>
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          {t("hub.crear.back")}
-        </Button>
-        <ContentCreatorTab
-          profile={profile}
-          topPosts={[]}
-          selectedPlatform={selectedPlatform}
-        />
+        {activeView !== "smart-links" && (
+          <Button variant="ghost" size="sm" onClick={() => setActiveView(null)}>
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            {t("hub.crear.back")}
+          </Button>
+        )}
+        {renderView()}
       </div>
     );
   }
-
-  if (activePath === "campaign") {
-    return (
-      <div className="space-y-4">
-        <Button variant="ghost" size="sm" onClick={() => setActivePath(null)}>
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          {t("hub.crear.back")}
-        </Button>
-        <CampaignDashboard />
-      </div>
-    );
-  }
-
-  if (activePath === "creative-studio") {
-    return (
-      <div className="space-y-4">
-        <Button variant="ghost" size="sm" onClick={() => setActivePath(null)}>
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          {t("hub.crear.back")}
-        </Button>
-        <CreatifyStudio />
-      </div>
-    );
-  }
-
-  if (activePath === "smart-links") {
-    return (
-      <div className="space-y-4">
-        <SmartLinkBuilder
-          companyId={profile?.company_id || ""}
-          onBack={() => setActivePath(null)}
-        />
-      </div>
-    );
-  }
-
-  // email-sequence has no implementation yet — show Coming Soon toast
-  if (activePath === "email-sequence") {
-    // Reset immediately since there's no view to show
-    setActivePath(null);
-  }
-
-  const paths = [
-    {
-      id: "quick-post" as CreationPath,
-      icon: PenTool,
-      titleKey: "hub.crear.quickPost.title",
-      descKey: "hub.crear.quickPost.description",
-      features: ["hub.crear.quickPost.f1", "hub.crear.quickPost.f2", "hub.crear.quickPost.f3"],
-      gradient: "from-primary/10 to-blue-500/10",
-      iconBg: "bg-primary/10 text-primary",
-    },
-    {
-      id: "campaign" as CreationPath,
-      icon: Megaphone,
-      titleKey: "hub.crear.campaign.title",
-      descKey: "hub.crear.campaign.description",
-      features: ["hub.crear.campaign.f1", "hub.crear.campaign.f2", "hub.crear.campaign.f3"],
-      gradient: "from-orange-500/10 to-red-500/10",
-      iconBg: "bg-orange-500/10 text-orange-600",
-    },
-    {
-      id: "creative-studio" as CreationPath,
-      icon: Video,
-      titleKey: "hub.crear.studio.title",
-      descKey: "hub.crear.studio.description",
-      features: ["hub.crear.studio.f1", "hub.crear.studio.f2", "hub.crear.studio.f3"],
-      gradient: "from-purple-500/10 to-pink-500/10",
-      iconBg: "bg-purple-500/10 text-purple-600",
-    },
-    {
-      id: "smart-links" as CreationPath,
-      icon: Link2,
-      titleKey: "hub.crear.smartLinks.title",
-      descKey: "hub.crear.smartLinks.description",
-      features: ["hub.crear.smartLinks.f1", "hub.crear.smartLinks.f2", "hub.crear.smartLinks.f3"],
-      gradient: "from-emerald-500/10 to-teal-500/10",
-      iconBg: "bg-emerald-500/10 text-emerald-600",
-    },
-    {
-      id: "email-sequence" as CreationPath,
-      icon: Mail,
-      titleKey: "hub.crear.emailSequence.title",
-      descKey: "hub.crear.emailSequence.description",
-      features: ["hub.crear.emailSequence.f1", "hub.crear.emailSequence.f2", "hub.crear.emailSequence.f3"],
-      gradient: "from-cyan-500/10 to-blue-500/10",
-      iconBg: "bg-cyan-500/10 text-cyan-600",
-      comingSoon: true,
-    },
-  ];
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-          <Sparkles className="h-6 w-6 text-primary" />
-          {t("hub.crear.title")}
-        </h2>
-        <p className="text-muted-foreground mt-1">{t("hub.crear.subtitle")}</p>
-      </div>
+      {/* View Toggle: Create / Calendar */}
+      <Tabs value={mainView} onValueChange={(v) => setMainView(v as "create" | "calendar")}>
+        <TabsList className="grid w-full grid-cols-2 max-w-xs">
+          <TabsTrigger value="create" className="gap-2">
+            ✏️ {t("hub.tabs.create")}
+          </TabsTrigger>
+          <TabsTrigger value="calendar" className="gap-2">
+            <Calendar className="w-4 h-4" />
+            {t("hub.tabs.calendar")}
+          </TabsTrigger>
+        </TabsList>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {paths.map((path) => {
-          const Icon = path.icon;
-          return (
-            <Card
-              key={path.id}
-              className={`group cursor-pointer border-2 hover:border-primary/40 hover:shadow-lg transition-all duration-300 bg-gradient-to-br ${path.gradient} ${(path as any).comingSoon ? 'opacity-75' : ''}`}
-              onClick={() => {
-                if ((path as any).comingSoon) return;
-                setActivePath(path.id);
-              }}
-            >
-              <CardHeader>
-                <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${path.iconBg} mb-3`}>
-                  <Icon className="h-6 w-6" />
-                </div>
-                <div className="flex items-center gap-2">
-                  <CardTitle className="text-lg">{t(path.titleKey)}</CardTitle>
-                  {(path as any).comingSoon && (
-                    <Badge variant="secondary" className="text-xs">{t("hub.crear.comingSoon", "Próximamente")}</Badge>
-                  )}
-                </div>
-                <CardDescription>{t(path.descKey)}</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ul className="space-y-2 text-sm text-muted-foreground">
-                  {path.features.map((fKey) => (
-                    <li key={fKey} className="flex items-center gap-2">
-                      <div className="w-1.5 h-1.5 rounded-full bg-primary" />
-                      {t(fKey)}
-                    </li>
-                  ))}
-                </ul>
-                <Button
-                  variant="outline"
-                  className="w-full mt-4 group-hover:bg-primary group-hover:text-primary-foreground transition-colors"
-                  disabled={(path as any).comingSoon}
-                >
-                  {(path as any).comingSoon ? t("hub.crear.comingSoon", "Próximamente") : t("hub.crear.start")}
-                </Button>
-              </CardContent>
-            </Card>
-          );
-        })}
-      </div>
+        {/* Direct Content Creator — no intermediate card selection */}
+        <TabsContent value="create" className="mt-6">
+          <ContentCreatorTab
+            profile={profile}
+            topPosts={[]}
+            selectedPlatform={selectedPlatform}
+          />
+        </TabsContent>
+
+        {/* Calendar View */}
+        <TabsContent value="calendar" className="mt-6">
+          <ContentCalendar profile={profile} />
+        </TabsContent>
+      </Tabs>
+
+      {/* Advanced Tools — Collapsible */}
+      <Collapsible open={advancedOpen} onOpenChange={setAdvancedOpen}>
+        <CollapsibleTrigger asChild>
+          <Button variant="ghost" className="w-full justify-between text-muted-foreground hover:text-foreground">
+            <span className="flex items-center gap-2">
+              <Wrench className="h-4 w-4" />
+              {t("hub.advancedTools.title", "Herramientas avanzadas")}
+            </span>
+            {advancedOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+          </Button>
+        </CollapsibleTrigger>
+        <CollapsibleContent className="pt-3">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {ADVANCED_TOOLS.map((tool) => (
+              <Button
+                key={tool.id}
+                variant="outline"
+                className="h-auto py-3 flex-col gap-1.5 text-xs"
+                onClick={() => setActiveView(tool.id)}
+              >
+                <span className="text-lg">{tool.icon}</span>
+                <span>{t(tool.labelKey)}</span>
+              </Button>
+            ))}
+          </div>
+        </CollapsibleContent>
+      </Collapsible>
     </div>
   );
 };

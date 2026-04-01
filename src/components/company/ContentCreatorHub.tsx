@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Sparkles, Edit3, Loader2, Wand2, RefreshCw } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { ContentIdeaCard } from "./ContentIdeaCard";
 import SimpleContentPublisher from "./SimpleContentPublisher";
 import { useEraOptimizer } from "@/hooks/useEraOptimizer";

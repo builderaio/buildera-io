@@ -243,8 +243,8 @@ export default function ContentCreatorHub({ profile, onContentPublished }: Conte
         .eq('id', ideaId);
 
       toast({
-        title: "Idea descartada",
-        description: "La idea ha sido descartada"
+        title: t('marketing:creator.ideaDismissed'),
+        description: t('marketing:creator.ideaDismissedDesc')
       });
 
       await loadContentIdeas();

@@ -21,6 +21,7 @@ interface ContentCreatorHubProps {
 
 export default function ContentCreatorHub({ profile, onContentPublished }: ContentCreatorHubProps) {
   const { toast } = useToast();
+  const { t } = useTranslation(['errors', 'marketing']);
   const [contentIdeas, setContentIdeas] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [creationMode, setCreationMode] = useState<'ai' | 'manual'>('ai');

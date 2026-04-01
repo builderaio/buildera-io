@@ -328,7 +328,7 @@ const CompanyDashboard = () => {
   };
 
   const handleNavigate = (section: string, params?: Record<string, string>) => {
-    console.log('🎯 Navegando a:', section, 'con params:', params);
+    if (import.meta.env.DEV) console.log('🎯 Navegando a:', section);
     setActiveView(section);
     
     const nextParams = new URLSearchParams(window.location.search);

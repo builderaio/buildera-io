@@ -61,8 +61,8 @@ export default function ResetPassword() {
 
       if (password !== confirmPassword) {
         toast({
-          title: "Error", 
-          description: "Las contraseñas no coinciden",
+          title: t('errors:general.title'), 
+          description: t('auth:resetPassword.mismatch', 'Las contraseñas no coinciden'),
           variant: "destructive",
         });
         return;

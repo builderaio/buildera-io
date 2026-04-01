@@ -254,7 +254,7 @@ const CompanyDashboard = () => {
         return;
       }
 
-      console.log('✅ Perfil validado y establecido');
+      if (import.meta.env.DEV) console.log('✅ Perfil validado y establecido');
       setProfile(profileData);
       
       const isProfileIncomplete = !profileData?.full_name;

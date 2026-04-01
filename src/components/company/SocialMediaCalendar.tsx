@@ -37,6 +37,7 @@ interface CalendarStats {
 }
 
 export function SocialMediaCalendar() {
+  const { t } = useTranslation();
   const [calendarData, setCalendarData] = useState<CalendarEntry[]>([]);
   const [stats, setStats] = useState<CalendarStats | null>(null);
   const [loading, setLoading] = useState(false);

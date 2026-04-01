@@ -39,6 +39,7 @@ const MisArchivos = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
+  const { t } = useTranslation();
 
   useEffect(() => {
     fetchFiles();

@@ -447,8 +447,8 @@ export default function ContentCreatorTab({ profile, topPosts, selectedPlatform,
                     
                     {/* Generated Image */}
                     {generatedImage && (
-                      <div className="p-4 bg-white/80 backdrop-blur-sm rounded-xl border-2 border-blue-200/50 shadow-sm">
-                        <h4 className="font-semibold mb-3 flex items-center gap-2 text-blue-900">
+                      <div className="p-4 bg-card/80 backdrop-blur-sm rounded-xl border-2 border-blue-500/20 shadow-sm">
+                        <h4 className="font-semibold mb-3 flex items-center gap-2 text-foreground">
                           <Image className="h-4 w-4" />
                           Imagen Generada
                         </h4>

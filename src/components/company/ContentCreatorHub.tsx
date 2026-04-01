@@ -373,7 +373,7 @@ export default function ContentCreatorHub({ profile, onContentPublished }: Conte
                 size="lg"
               >
                 <Edit3 className="w-4 h-4 mr-2" />
-                Continuar con este contenido
+                {t('marketing:creator.continueWithContent')}
               </Button>
             </TabsContent>
           </Tabs>

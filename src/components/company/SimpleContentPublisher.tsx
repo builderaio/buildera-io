@@ -104,7 +104,7 @@ export default function SimpleContentPublisher({
   generatedContentId,
   source = 'manual'
 }: Props) {
-  const { t } = useTranslation('marketing');
+  const { t } = useTranslation(['marketing', 'errors']);
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [socialAccounts, setSocialAccounts] = useState<SocialAccount[]>([]);

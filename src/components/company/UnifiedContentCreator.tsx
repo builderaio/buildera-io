@@ -564,6 +564,7 @@ export default function UnifiedContentCreator({ profile, topPosts = [], selected
           setSelectedContentImage(url);
           setShowImageSelector(false);
         }}
+        profile={profile}
       />
 
       {/* Publisher Dialog */}

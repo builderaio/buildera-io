@@ -175,7 +175,7 @@ const CompanyDashboard = () => {
             .maybeSingle();
           
           if (!fullOnboarding?.first_login_completed) {
-            console.log('❌ Usuario sin empresa ni first_login completado, redirigir a complete-profile');
+            if (import.meta.env.DEV) console.log('❌ Usuario sin empresa, redirigir a complete-profile');
             navigate('/complete-profile');
           } else {
             // Ya pasó por complete-profile pero algo falló en la creación de empresa

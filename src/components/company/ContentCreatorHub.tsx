@@ -155,8 +155,8 @@ export default function ContentCreatorHub({ profile, onContentPublished }: Conte
       setAiPrompt('');
 
       toast({
-        title: "¡Contenido generado!",
-        description: "Revisa y publica tu contenido",
+        title: t('marketing:creator.contentGenerated'),
+        description: t('marketing:creator.reviewAndPublish'),
       });
     } catch (error) {
       console.error('Error generating content:', error);

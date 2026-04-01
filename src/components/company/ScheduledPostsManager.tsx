@@ -344,14 +344,16 @@ export const ScheduledPostsManager = ({ profile, onPostsUpdated }: ScheduledPost
 
                           {post.platforms?.length > 0 && (
                             <div className="flex flex-wrap gap-1 ml-11">
-                              {post.platforms.map(platformId => {
+                          {post.platforms.map(platformId => {
                                 const platform = platformConfig[platformId as keyof typeof platformConfig];
-                                return platform ? (
+                                if (!platform) return null;
+                                const PlatformIcon = platform.icon;
+                                return (
                                   <Badge key={platformId} variant="outline" className="text-xs">
-                                    <span className="mr-1">{platform.icon}</span>
+                                    <PlatformIcon className={`h-3 w-3 mr-1 ${platform.color}`} />
                                     {platform.name}
                                   </Badge>
-                                ) : null;
+                                );
                               })}
                             </div>
                           )}

@@ -18,6 +18,7 @@ export default function ResetPassword() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { t } = useTranslation(['auth', 'errors']);
 
   useEffect(() => {
     // Verificar si hay tokens en la URL

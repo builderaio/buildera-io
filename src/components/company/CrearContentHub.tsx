@@ -73,6 +73,12 @@ export const CrearContentHub = ({ profile, selectedPlatform, onNavigateTab }: Cr
     );
   }
 
+  // email-sequence has no implementation yet — show Coming Soon toast
+  if (activePath === "email-sequence") {
+    // Reset immediately since there's no view to show
+    setActivePath(null);
+  }
+
   const paths = [
     {
       id: "quick-post" as CreationPath,

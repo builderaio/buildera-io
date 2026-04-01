@@ -108,7 +108,7 @@ const CompanyDashboard = () => {
         .maybeSingle();
 
       if (onboardingStatus?.onboarding_completed_at) {
-        console.log('✅ Usuario ya completó onboarding, cargando perfil y continuando');
+        if (import.meta.env.DEV) console.log('✅ Usuario ya completó onboarding, cargando perfil y continuando');
         
         // Check if user should see activation wizard (journey_current_step <= 2)
         const { data: companyData } = await supabase

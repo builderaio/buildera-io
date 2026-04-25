@@ -217,6 +217,75 @@ const PostOnboardingActivationWizard = ({ profile, onComplete }: PostOnboardingA
         }, { onConflict: 'company_id' });
 
       if (!error) {
+        // Step 1: Configure marketing department in company_department_config
+        try {
+          const { error: deptErr } = await supabase
+            .from('company_department_config' as any)
+            .upsert({
+              company_id: companyId,
+              department: 'marketing',
+              autopilot_enabled: true,
+              execution_frequency: '6h',
+              max_posts_per_day: 3,
+              active_hours: { start: '09:00', end: '21:00' },
+            }, { onConflict: 'company_id,department' });
+          if (deptErr) throw deptErr;
+        } catch (deptError) {
+          console.warn('[Autopilot] Failed to configure department:', deptError);
+          toast({
+            title: t('common:status.warning', 'Advertencia'),
+            description: t('common:activationWizard.departmentConfigWarning', 'No se pudo configurar el departamento de marketing'),
+            variant: 'destructive',
+          });
+        }
+
+        // Step 2: Ensure company has credits
+        try {
+          const { error: credErr } = await supabase
+            .from('company_credits')
+            .upsert({
+              company_id: companyId,
+              total_credits: 200,
+              used_credits: 0,
+            }, { onConflict: 'company_id', ignoreDuplicates: true });
+          if (credErr) throw credErr;
+        } catch (credError) {
+          console.warn('[Autopilot] Failed to provision credits:', credError);
+          toast({
+            title: t('common:status.warning', 'Advertencia'),
+            description: t('common:activationWizard.creditsWarning', 'No se pudieron aprovisionar los créditos iniciales'),
+            variant: 'destructive',
+          });
+        }
+
+        // Step 3: Enable marketing/content/analytics agents for the company
+        try {
+          const { data: agents, error: agentsErr } = await supabase
+            .from('platform_agents')
+            .select('id')
+            .eq('is_active', true)
+            .in('category', ['marketing', 'content', 'analytics']);
+          if (agentsErr) throw agentsErr;
+
+          if (agents && agents.length > 0) {
+            const rows = agents.map((a: any) => ({
+              company_id: companyId,
+              agent_id: a.id,
+            }));
+            const { error: enableErr } = await supabase
+              .from('company_enabled_agents' as any)
+              .upsert(rows, { onConflict: 'company_id,agent_id', ignoreDuplicates: true });
+            if (enableErr) throw enableErr;
+          }
+        } catch (agentsError) {
+          console.warn('[Autopilot] Failed to enable agents:', agentsError);
+          toast({
+            title: t('common:status.warning', 'Advertencia'),
+            description: t('common:activationWizard.agentsWarning', 'No se pudieron habilitar todos los agentes'),
+            variant: 'destructive',
+          });
+        }
+
         await advanceToStep(5);
         setCompletedSteps(prev => new Set([...prev, 3]));
         toast({ title: "🚀", description: t('common:activationWizard.autopilotActivated', 'Autopilot activado') });

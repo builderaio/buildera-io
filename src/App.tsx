@@ -101,6 +101,10 @@ const App = () => {
                 <Route path="/pricing" element={<Pricing />} />
                 <Route path="/governance" element={<Governance />} />
                 <Route path="/contacto" element={<Contacto />} />
+                <Route path="/contact" element={<Navigate to="/contacto" replace />} />
+                <Route path="/about" element={<Navigate to="/" replace />} />
+                <Route path="/blog" element={<Navigate to="/" replace />} />
+                <Route path="/company" element={<Navigate to="/auth" replace />} />
                 <Route path="/subscription-success" element={<SubscriptionSuccess />} />
                 <Route path="/invite/:token" element={<InviteAccept />} />
                 

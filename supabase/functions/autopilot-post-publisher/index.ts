@@ -151,6 +151,9 @@ serve(async (req) => {
         : linkedinAccount.linkedin_page_id;
       formData.append('target_linkedin_page_id', pageId);
     }
+    if (validPlatforms.includes('google_business') && gbpAccount?.google_business_location_id) {
+      formData.append('google_business_location_id', gbpAccount.google_business_location_id);
+    }
 
     // Forward any platform-specific params
     if (platform_params) {

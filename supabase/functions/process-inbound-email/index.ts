@@ -204,7 +204,7 @@ const handler = async (req: Request): Promise<Response> => {
       .eq("company_id", matchedCompanyId)
       .single();
 
-    const agentProcessingEnabled = mailboxConfig?.[`${mailboxType}_agent_processing`];
+    const agentProcessingEnabled = (mailboxConfig as any)?.[`${mailboxType}_agent_processing`];
 
     if (agentProcessingEnabled) {
       // TODO: Trigger agent processing

@@ -946,7 +946,7 @@ async function guardPhase(companyId: string, department: string, decisions: any[
               .eq('company_id', companyId)
               .not('input_data', 'is', null);
             // Filter by campaign_id in input_data
-            const campaignCredits = (campaignUsage || []).reduce((s, r) => {
+            const campaignCredits = (campaignUsage || []).reduce((s, r: any) => {
               const inputData = r.input_data as any;
               if (inputData?.campaign_id === campaignId) return s + (r.credits_consumed || 0);
               return s;
@@ -1161,13 +1161,13 @@ async function executeAgentForDecision(
     const contextReqs = agentFull?.context_requirements as string[] || [];
     if (contextReqs.length > 0) {
       const contextLoaders: Record<string, () => Promise<any>> = {
-        strategy: () => supabase.from('company_strategy').select('*').eq('company_id', companyId).maybeSingle().then(r => r.data),
-        branding: () => supabase.from('company_branding').select('*').eq('company_id', companyId).maybeSingle().then(r => r.data),
-        audiences: () => supabase.from('company_audiences').select('*').eq('company_id', companyId).then(r => r.data),
-        communication: () => supabase.from('company_communication_settings').select('*').eq('company_id', companyId).maybeSingle().then(r => r.data),
-        objectives: () => supabase.from('company_objectives').select('*').eq('company_id', companyId).then(r => r.data),
-        products: () => supabase.from('company_products').select('*').eq('company_id', companyId).then(r => r.data),
-        competitors: () => supabase.from('company_competitors').select('*').eq('company_id', companyId).then(r => r.data),
+        strategy: () => Promise.resolve(supabase.from('company_strategy').select('*').eq('company_id', companyId).maybeSingle().then(r => r.data)),
+        branding: () => Promise.resolve(supabase.from('company_branding').select('*').eq('company_id', companyId).maybeSingle().then(r => r.data)),
+        audiences: () => Promise.resolve(supabase.from('company_audiences').select('*').eq('company_id', companyId).then(r => r.data)),
+        communication: () => Promise.resolve(supabase.from('company_communication_settings').select('*').eq('company_id', companyId).maybeSingle().then(r => r.data)),
+        objectives: () => Promise.resolve(supabase.from('company_objectives').select('*').eq('company_id', companyId).then(r => r.data)),
+        products: () => Promise.resolve(supabase.from('company_products').select('*').eq('company_id', companyId).then(r => r.data)),
+        competitors: () => Promise.resolve(supabase.from('company_competitors').select('*').eq('company_id', companyId).then(r => r.data)),
       };
       const contextPromises = contextReqs
         .filter(req => contextLoaders[req])
@@ -2207,7 +2207,7 @@ async function runDepartmentCycle(companyId: string, department: string, deptCon
             .eq('user_id', ownerUserId)
             .eq('is_connected', true)
             .not('platform', 'eq', 'upload_post_profile');
-          accountsToScrape = ownerAccounts || [];
+          accountsToScrape = (ownerAccounts || []) as any;
         }
 
         console.log(`📋 [marketing] Found ${accountsToScrape.length} accounts to scrape`);

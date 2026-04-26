@@ -163,7 +163,7 @@ serve(async (req) => {
     console.error('Error in send-company-invitation:', error);
     return new Response(JSON.stringify({ 
       success: false,
-      error: error.message || 'An error occurred while sending the invitation'
+      error: (error as Error).message || 'An error occurred while sending the invitation'
     }), {
       status: 400,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

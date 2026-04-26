@@ -139,8 +139,8 @@ CRITICAL INSTRUCTIONS:
     if (isArray) {
       // Dividir por líneas y limpiar
       const lines = translatedText.split('\n')
-        .map(line => line.replace(/^\d+\.\s*/, '').trim())
-        .filter(line => line.length > 0);
+        .map((line: string) => line.replace(/^\d+\.\s*/, '').trim())
+        .filter((line: string) => line.length > 0);
       
       // Si no coincide el número de elementos, intentar una estrategia alternativa
       if (lines.length !== contentToTranslate.length) {

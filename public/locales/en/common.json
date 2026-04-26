@@ -1879,5 +1879,45 @@
       "title": "Available credits",
       "topUp": "Top up credits →"
     }
+  },
+  "strategic": {
+    "ops": {
+      "never": "Never run",
+      "justNow": "Just now",
+      "minAgo": "{{min}} min ago",
+      "hoursAgo": "{{h}}h ago",
+      "daysAgo": "{{d}}d ago",
+      "active": "active",
+      "review": "Review",
+      "executed": "Executed",
+      "blocked": "Blocked",
+      "topUp": "Top up credits →",
+      "manageGovernance": "Manage governance →",
+      "creditsTitle": "Credits budget",
+      "creditsConsumed": "Consumed this cycle",
+      "creditsLow": "Low",
+      "creditsEmpty": "Out of credits",
+      "approvalsTitle": "Pending approvals",
+      "approvalsEmpty": "Nothing pending — all approved or no requests",
+      "deptTitle": "Departments status",
+      "decisionsTitle": "Latest Autopilot decisions",
+      "decisionsEmpty": "Autopilot hasn't made decisions yet. They will appear here as soon as the system starts operating.",
+      "guardrailsTitle": "Active guardrails",
+      "guardrailsEmpty": "No guardrails configured. Set per-department limits to enforce governance.",
+      "dept": {
+        "active": "Active",
+        "inactive": "Inactive",
+        "unconfigured": "Unconfigured",
+        "humanApproval": "Human approval"
+      },
+      "departments": {
+        "marketing": "Marketing",
+        "sales": "Sales",
+        "finance": "Finance",
+        "legal": "Legal",
+        "talent": "Talent",
+        "operations": "Operations"
+      }
+    }
   }
 }

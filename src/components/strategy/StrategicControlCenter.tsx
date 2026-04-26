@@ -24,6 +24,7 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { BusinessModelType } from '@/types/playToWin';
 import AgenticMaturityAssessment from './AgenticMaturityAssessment';
+import StrategicControlOperationsPanel from './StrategicControlOperationsPanel';
 
 interface StrategicControlCenterProps {
   profile: any;
@@ -186,6 +187,11 @@ export default function StrategicControlCenter({ profile }: StrategicControlCent
             </p>
           </div>
         </div>
+      </motion.div>
+
+      {/* ═══ OPERATIONS PANEL — credits, departments, approvals, decisions, guardrails ═══ */}
+      <motion.div {...fadeUp(0.02)}>
+        <StrategicControlOperationsPanel companyId={companyId} onNavigate={handleNavigate} />
       </motion.div>
 
       {/* ═══ STRATEGIC PROFILE BLOCK ═══ */}

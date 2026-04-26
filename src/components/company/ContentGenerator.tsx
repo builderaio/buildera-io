@@ -10,6 +10,7 @@ import { EraOptimizerButton } from "@/components/ui/era-optimizer-button";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
+import { parseAIServiceError, getAIErrorTranslationKey } from "@/utils/aiServiceErrors";
 import { 
   Zap, 
   Sparkles, 

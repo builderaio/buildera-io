@@ -320,14 +320,20 @@ serve(async (req) => {
     if (!response.ok) {
       const errorText = await response.text();
       console.error(`[openai-responses-handler] OpenAI API error: ${response.status} - ${errorText}`);
-      
+
+      // On auth/quota issues, fall back to Lovable AI Gateway if available
+      if ((response.status === 401 || response.status === 402 || response.status === 429) && lovableApiKey) {
+        console.log('[openai-responses-handler] OpenAI quota/auth error — falling back to Lovable AI Gateway');
+        return await callLovableGateway(lovableApiKey, modelName, systemPrompt, formattedInput, temperature, config.max_output_tokens, functionName);
+      }
+
       // If Responses API fails, fallback to Chat Completions API
       console.log('[openai-responses-handler] Falling back to Chat Completions API');
       return await fallbackToChatCompletions(apiKey, modelName, systemPrompt, formattedInput, temperature, config.max_output_tokens);
     }
 
     const data = await response.json();
-    
+
     // Extract output text
     const outputText = extractOutputText(data);
 

@@ -9,6 +9,7 @@ import { useTranslation } from "react-i18next";
 import { usePlatformAgents, PlatformAgent } from "@/hooks/usePlatformAgents";
 import { useCompanyCredits } from "@/hooks/useCompanyCredits";
 import { useCompanyState } from "@/hooks/useCompanyState";
+import { useCompany } from "@/contexts/CompanyContext";
 import { useNextBestAction } from "@/hooks/useNextBestAction";
 import { CompanyStateCard } from "./CompanyStateCard";
 import { NextBestActionCard, RecommendationsList } from "./NextBestActionCard";

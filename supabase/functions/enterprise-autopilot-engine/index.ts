@@ -1196,7 +1196,7 @@ async function executeAgentForDecision(
     const agentResult = await agentRes.json();
     const execTime = Date.now() - execStart;
 
-    await supabase.from('agent_usage_log').insert({
+    const { error: usageErr } = await supabase.from('agent_usage_log').insert({
       agent_id: agent.id,
       company_id: companyId,
       status: agentResult.success !== false ? 'completed' : 'failed',
@@ -1207,6 +1207,7 @@ async function executeAgentForDecision(
       output_summary: agentResult.summary || decision.description,
       error_message: agentResult.error || null,
     });
+    if (usageErr) console.error(`❌ agent_usage_log INSERT FAILED (agent=${agentCode}, company=${companyId}):`, usageErr);
 
     return { ...decision, action_taken: true, execution_result: agentResult.success !== false ? 'success' : 'failed' };
   } catch (err) {

@@ -56,8 +56,7 @@ export const useCompanyManagement = () => {
             company_strategy (
               propuesta_valor,
               mision,
-              vision,
-              valores_corporativos
+              vision
             )
           )
         `)

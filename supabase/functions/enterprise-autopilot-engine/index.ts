@@ -2269,7 +2269,7 @@ async function runDepartmentCycle(companyId: string, department: string, deptCon
           } else {
             // Still insufficient - log bootstrap_required decision
             console.warn(`🚫 [marketing] Bootstrap completed but still insufficient data.`);
-            await supabase.from('autopilot_decisions').insert({
+            const { error: csErr } = await supabase.from('autopilot_decisions').insert({
               company_id: companyId,
               cycle_id: cycleId,
               decision_type: 'cold_start_content',
@@ -2280,6 +2280,7 @@ async function runDepartmentCycle(companyId: string, department: string, deptCon
               guardrail_result: 'needs_action',
               expected_impact: { suggested_action: 'generate_initial_content' },
             });
+            if (csErr) console.error(`❌ autopilot_decisions INSERT FAILED (cold_start_after_scrape, ${department}):`, csErr);
             await logExecution(companyId, cycleId, department, 'sense', 'needs_bootstrap', {
               error_message: `Bootstrap attempted but: ${sufficiency2.reason}`,
               context_snapshot: senseData2,

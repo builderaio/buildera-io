@@ -199,60 +199,122 @@ export const ADNStrategyTab = ({
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div>
-            <div className="flex items-center justify-between mb-1">
-              <label className="text-xs font-medium text-muted-foreground">{t('common:adn.mission')}</label>
-              <EraOptimizerButton
-                currentText={strategyData?.mision || ''}
-                fieldType="misión"
-                context={{ companyName: companyData?.name, industry: companyData?.industry_sector }}
-                onOptimized={(text) => saveField('mision', text, 'company_strategy')}
-                size="sm"
-              />
-            </div>
-            <AutoSaveField
-              value={strategyData?.mision || ''}
-              onSave={(v) => saveField('mision', v, 'company_strategy')}
-              type="textarea"
-              placeholder={t('common:adn.missionPlaceholder')}
-            />
-          </div>
-          <div>
-            <div className="flex items-center justify-between mb-1">
-              <label className="text-xs font-medium text-muted-foreground">{t('common:adn.vision')}</label>
-              <EraOptimizerButton
-                currentText={strategyData?.vision || ''}
-                fieldType="visión"
-                context={{ companyName: companyData?.name, industry: companyData?.industry_sector }}
-                onOptimized={(text) => saveField('vision', text, 'company_strategy')}
-                size="sm"
-              />
-            </div>
-            <AutoSaveField
-              value={strategyData?.vision || ''}
-              onSave={(v) => saveField('vision', v, 'company_strategy')}
-              type="textarea"
-              placeholder={t('common:adn.visionPlaceholder')}
-            />
-          </div>
-          <div>
-            <div className="flex items-center justify-between mb-1">
-              <label className="text-xs font-medium text-muted-foreground">{t('common:adn.valueProposition')}</label>
-              <EraOptimizerButton
-                currentText={strategyData?.propuesta_valor || ''}
-                fieldType="propuesta de valor"
-                context={{ companyName: companyData?.name, industry: companyData?.industry_sector }}
-                onOptimized={(text) => saveField('propuesta_valor', text, 'company_strategy')}
-                size="sm"
-              />
-            </div>
-            <AutoSaveField
-              value={strategyData?.propuesta_valor || ''}
-              onSave={(v) => saveField('propuesta_valor', v, 'company_strategy')}
-              type="textarea"
-              placeholder={t('common:adn.valuePropositionPlaceholder')}
-            />
-          </div>
+          {(() => {
+            const aiContext = {
+              company_name: companyData?.name,
+              industry_sector: companyData?.industry_sector,
+              company_size: companyData?.company_size,
+              website_url: companyData?.website_url,
+            };
+            return (
+              <>
+                <div>
+                  <div className="flex items-center justify-between mb-1 gap-2 flex-wrap">
+                    <label className="text-xs font-medium text-muted-foreground">{t('common:adn.mission')}</label>
+                    <div className="flex items-center gap-2">
+                      <AIGenerateFieldButton
+                        fieldType="misión"
+                        currentValue={strategyData?.mision}
+                        companyInfo={aiContext}
+                        onGenerated={(text) => saveField('mision', text, 'company_strategy')}
+                      />
+                      <EraOptimizerButton
+                        currentText={strategyData?.mision || ''}
+                        fieldType="misión"
+                        context={{ companyName: companyData?.name, industry: companyData?.industry_sector }}
+                        onOptimized={(text) => saveField('mision', text, 'company_strategy')}
+                        size="sm"
+                      />
+                    </div>
+                  </div>
+                  <AutoSaveField
+                    value={strategyData?.mision || ''}
+                    onSave={(v) => saveField('mision', v, 'company_strategy')}
+                    type="textarea"
+                    placeholder={t('common:adn.missionPlaceholder')}
+                  />
+                </div>
+                <div>
+                  <div className="flex items-center justify-between mb-1 gap-2 flex-wrap">
+                    <label className="text-xs font-medium text-muted-foreground">{t('common:adn.vision')}</label>
+                    <div className="flex items-center gap-2">
+                      <AIGenerateFieldButton
+                        fieldType="visión"
+                        currentValue={strategyData?.vision}
+                        companyInfo={aiContext}
+                        onGenerated={(text) => saveField('vision', text, 'company_strategy')}
+                      />
+                      <EraOptimizerButton
+                        currentText={strategyData?.vision || ''}
+                        fieldType="visión"
+                        context={{ companyName: companyData?.name, industry: companyData?.industry_sector }}
+                        onOptimized={(text) => saveField('vision', text, 'company_strategy')}
+                        size="sm"
+                      />
+                    </div>
+                  </div>
+                  <AutoSaveField
+                    value={strategyData?.vision || ''}
+                    onSave={(v) => saveField('vision', v, 'company_strategy')}
+                    type="textarea"
+                    placeholder={t('common:adn.visionPlaceholder')}
+                  />
+                </div>
+                <div>
+                  <div className="flex items-center justify-between mb-1 gap-2 flex-wrap">
+                    <label className="text-xs font-medium text-muted-foreground">{t('common:adn.valueProposition')}</label>
+                    <div className="flex items-center gap-2">
+                      <AIGenerateFieldButton
+                        fieldType="propuesta de valor"
+                        currentValue={strategyData?.propuesta_valor}
+                        companyInfo={aiContext}
+                        onGenerated={(text) => saveField('propuesta_valor', text, 'company_strategy')}
+                      />
+                      <EraOptimizerButton
+                        currentText={strategyData?.propuesta_valor || ''}
+                        fieldType="propuesta de valor"
+                        context={{ companyName: companyData?.name, industry: companyData?.industry_sector }}
+                        onOptimized={(text) => saveField('propuesta_valor', text, 'company_strategy')}
+                        size="sm"
+                      />
+                    </div>
+                  </div>
+                  <AutoSaveField
+                    value={strategyData?.propuesta_valor || ''}
+                    onSave={(v) => saveField('propuesta_valor', v, 'company_strategy')}
+                    type="textarea"
+                    placeholder={t('common:adn.valuePropositionPlaceholder')}
+                  />
+                </div>
+                <div>
+                  <div className="flex items-center justify-between mb-1 gap-2 flex-wrap">
+                    <label className="text-xs font-medium text-muted-foreground">{t('common:adn.corporateValues', 'Valores corporativos')}</label>
+                    <div className="flex items-center gap-2">
+                      <AIGenerateFieldButton
+                        fieldType="valores corporativos"
+                        currentValue={strategyData?.valores_corporativos}
+                        companyInfo={aiContext}
+                        onGenerated={(text) => saveField('valores_corporativos', text, 'company_strategy')}
+                      />
+                      <EraOptimizerButton
+                        currentText={strategyData?.valores_corporativos || ''}
+                        fieldType="valores corporativos"
+                        context={{ companyName: companyData?.name, industry: companyData?.industry_sector }}
+                        onOptimized={(text) => saveField('valores_corporativos', text, 'company_strategy')}
+                        size="sm"
+                      />
+                    </div>
+                  </div>
+                  <AutoSaveField
+                    value={strategyData?.valores_corporativos || ''}
+                    onSave={(v) => saveField('valores_corporativos', v, 'company_strategy')}
+                    type="textarea"
+                    placeholder={t('common:adn.corporateValuesPlaceholder', 'Lista los valores que guían las decisiones de tu empresa…')}
+                  />
+                </div>
+              </>
+            );
+          })()}
         </CardContent>
       </Card>
 

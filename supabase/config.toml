@@ -30,6 +30,9 @@ verify_jwt = false
 [functions.company-info-extractor]
 verify_jwt = false
 
+[functions.company-onboarding-diagnosis]
+verify_jwt = false
+
 [functions.send-buildera-email]
 verify_jwt = false
 

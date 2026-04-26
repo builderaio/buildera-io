@@ -414,9 +414,104 @@ async function fallbackToChatCompletions(
     JSON.stringify({
       success: true,
       output: outputText,
+      response: outputText,
       model: model,
       usage: data.usage || null,
       fallback: true,
+    }),
+    { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+  );
+}
+
+// Map OpenAI model names → Lovable AI Gateway equivalents
+function mapModelToLovableGateway(openAiModel: string): string {
+  const m = (openAiModel || '').toLowerCase();
+  if (m.includes('gpt-5-nano') || m.includes('4o-mini') || m.includes('4.1-mini') || m.includes('mini')) {
+    return 'google/gemini-2.5-flash';
+  }
+  if (m.includes('gpt-5-mini')) {
+    return 'google/gemini-2.5-flash';
+  }
+  if (m.includes('gpt-5') || m.includes('gpt-4o') || m.includes('gpt-4.1')) {
+    return 'google/gemini-2.5-pro';
+  }
+  return 'google/gemini-2.5-flash';
+}
+
+// Fallback to Lovable AI Gateway (uses LOVABLE_API_KEY, no user-managed OpenAI key needed)
+async function callLovableGateway(
+  lovableApiKey: string,
+  model: string,
+  systemPrompt: string | null,
+  input: string | any[],
+  temperature: number,
+  maxTokens: number,
+  functionName: string,
+): Promise<Response> {
+  const gatewayModel = mapModelToLovableGateway(model);
+  const messages: any[] = [];
+
+  if (systemPrompt) {
+    messages.push({ role: 'system', content: systemPrompt });
+  }
+
+  if (Array.isArray(input)) {
+    messages.push(...input);
+  } else {
+    messages.push({ role: 'user', content: typeof input === 'string' ? input : JSON.stringify(input) });
+  }
+
+  console.log(`[openai-responses-handler] Lovable Gateway call → model=${gatewayModel} (mapped from ${model})`);
+
+  const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${lovableApiKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: gatewayModel,
+      messages,
+      temperature,
+      max_tokens: maxTokens,
+    }),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error(`[openai-responses-handler] Lovable Gateway error: ${response.status} - ${errorText}`);
+
+    if (response.status === 429) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'Rate limits exceeded on Lovable AI Gateway. Please try again shortly.' }),
+        { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    if (response.status === 402) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'Lovable AI credits exhausted. Add credits in Settings → Workspace → Usage.' }),
+        { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    return new Response(
+      JSON.stringify({ success: false, error: `Lovable Gateway error: ${errorText}` }),
+      { status: response.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
+
+  const data = await response.json();
+  const outputText = data.choices?.[0]?.message?.content || '';
+
+  return new Response(
+    JSON.stringify({
+      success: true,
+      output: outputText,
+      response: outputText, // Backwards compat alias
+      model: gatewayModel,
+      functionName,
+      usage: data.usage || null,
+      provider: 'lovable-ai-gateway',
     }),
     { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
   );

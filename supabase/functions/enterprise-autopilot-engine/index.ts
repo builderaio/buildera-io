@@ -2378,8 +2378,8 @@ async function runDepartmentCycle(companyId: string, department: string, deptCon
     const contentRejected = blocked;
     const contentPendingReview = pending;
 
-    try {
-      await supabase.from('autopilot_execution_log').insert({
+    {
+      const { error: cycleLogError } = await supabase.from('autopilot_execution_log').insert({
         company_id: companyId,
         cycle_id: cycleId,
         phase: 'complete_cycle',
@@ -2394,9 +2394,11 @@ async function runDepartmentCycle(companyId: string, department: string, deptCon
         content_rejected: contentRejected,
         content_pending_review: contentPendingReview,
       });
-      console.log(`📋 [${department}] Cycle summary logged to autopilot_execution_log (credits: ${cycleCreditsConsumed})`);
-    } catch (logErr) {
-      console.error(`⚠️ [${department}] Failed to write autopilot_execution_log:`, logErr);
+      if (cycleLogError) {
+        console.error(`❌ [${department}] autopilot_execution_log INSERT FAILED:`, cycleLogError);
+      } else {
+        console.log(`📋 [${department}] Cycle summary logged to autopilot_execution_log (credits: ${cycleCreditsConsumed})`);
+      }
     }
 
     console.log(`✅ [${department}] Cycle ${cycleId} done in ${totalExecutionTime}ms`);
@@ -2406,22 +2408,23 @@ async function runDepartmentCycle(companyId: string, department: string, deptCon
     await logExecution(companyId, cycleId, department, 'error', 'failed', {
       error_message: (error as Error).message, execution_time_ms: Date.now() - startTime,
     });
-    // Also log failure to autopilot_execution_log
-    try {
-      await supabase.from('autopilot_execution_log').insert({
-        company_id: companyId,
-        cycle_id: cycleId,
-        phase: 'complete_cycle',
-        status: 'failed',
-        error_message: (error as Error).message,
-        execution_time_ms: Date.now() - startTime,
-        credits_consumed: 0,
-        content_generated: 0,
-        content_approved: 0,
-        content_rejected: 0,
-        content_pending_review: 0,
-      });
-    } catch {}
+    // Also log failure to autopilot_execution_log (surface errors instead of swallowing)
+    const { error: failLogError } = await supabase.from('autopilot_execution_log').insert({
+      company_id: companyId,
+      cycle_id: cycleId,
+      phase: 'complete_cycle',
+      status: 'failed',
+      error_message: (error as Error).message,
+      execution_time_ms: Date.now() - startTime,
+      credits_consumed: 0,
+      content_generated: 0,
+      content_approved: 0,
+      content_rejected: 0,
+      content_pending_review: 0,
+    });
+    if (failLogError) {
+      console.error(`❌ [${department}] autopilot_execution_log FAILURE INSERT FAILED:`, failLogError);
+    }
     return { department, cycle_id: cycleId, success: false, error: (error as Error).message };
   }
 }

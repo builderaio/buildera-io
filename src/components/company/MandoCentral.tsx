@@ -386,7 +386,7 @@ const MandoCentral = ({ profile, onNavigate }: MandoCentralProps) => {
         userId={profile?.user_id}
         onExecutionComplete={() => {
           refetchCredits();
-          loadDashboardData();
+          if (companyId) loadDashboardData(companyId);
         }}
       />
     </div>

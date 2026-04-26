@@ -134,6 +134,31 @@ serve(async (req) => {
       case 'get_next_queue_slot':
         result = await getNextQueueSlot(uploadPostApiKey, data);
         break;
+      // === Reddit detailed posts ===
+      case 'get_reddit_detailed_posts':
+        result = await getRedditDetailedPosts(uploadPostApiKey, data);
+        break;
+      // === FFmpeg jobs ===
+      case 'create_ffmpeg_job':
+        result = await createFfmpegJob(uploadPostApiKey, data);
+        break;
+      case 'get_ffmpeg_job_status':
+        result = await getFfmpegJobStatus(uploadPostApiKey, data);
+        break;
+      case 'get_ffmpeg_job_download':
+        result = await getFfmpegJobDownload(uploadPostApiKey, data);
+        break;
+      case 'get_ffmpeg_consumption':
+        result = await getFfmpegConsumption(uploadPostApiKey);
+        break;
+      // === Webhook notifications config ===
+      case 'configure_webhook_notifications':
+        result = await configureWebhookNotifications(uploadPostApiKey, data);
+        break;
+      // === Delete user profile ===
+      case 'delete_user_profile':
+        result = await deleteUserProfile(supabaseClient, user.id, uploadPostApiKey, data);
+        break;
       default:
         return new Response(
           JSON.stringify({ error: 'Acción no válida' }),

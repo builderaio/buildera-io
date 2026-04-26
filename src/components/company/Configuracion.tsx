@@ -62,7 +62,7 @@ const Configuracion = ({ profile, resetTutorial }: ConfiguracionProps) => {
       <Card>
         <CardContent className="p-6 md:p-8">
           <Tabs defaultValue="security" className="w-full">
-            <TabsList className="grid w-full grid-cols-5 mb-6">
+            <TabsList className="grid w-full grid-cols-6 mb-6">
               <TabsTrigger value="security" className="gap-2 text-xs sm:text-sm">
                 <Shield className="w-4 h-4 hidden sm:block" />
                 {t("config.tabs.security")}
@@ -82,6 +82,10 @@ const Configuracion = ({ profile, resetTutorial }: ConfiguracionProps) => {
               <TabsTrigger value="notifications" className="gap-2 text-xs sm:text-sm">
                 <Bell className="w-4 h-4 hidden sm:block" />
                 {t("config.tabs.notifications", "Alertas")}
+              </TabsTrigger>
+              <TabsTrigger value="system" className="gap-2 text-xs sm:text-sm">
+                <Activity className="w-4 h-4 hidden sm:block" />
+                {t("config.tabs.system", "Sistema")}
               </TabsTrigger>
             </TabsList>
 

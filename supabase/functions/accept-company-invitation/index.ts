@@ -139,7 +139,7 @@ serve(async (req) => {
     console.error('Error in accept-company-invitation:', error);
     return new Response(JSON.stringify({ 
       success: false,
-      error: error.message || 'An error occurred while accepting the invitation'
+      error: (error as Error).message || 'An error occurred while accepting the invitation'
     }), {
       status: 400,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

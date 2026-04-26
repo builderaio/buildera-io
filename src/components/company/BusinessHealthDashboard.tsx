@@ -267,6 +267,41 @@ const BusinessHealthDashboard = ({ profile, onNavigate }: BusinessHealthDashboar
     }
   }, [companyId]);
 
+  // Pending approvals counter (with realtime sync)
+  useEffect(() => {
+    if (!companyId) {
+      setPendingApprovals(0);
+      return;
+    }
+    const fetchPending = async () => {
+      const { count } = await supabase
+        .from('autopilot_decisions')
+        .select('id', { count: 'exact', head: true })
+        .eq('company_id', companyId)
+        .eq('action_taken', false);
+      setPendingApprovals(count || 0);
+    };
+    fetchPending();
+
+    const channel = supabase
+      .channel(`approvals_dashboard_${companyId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'autopilot_decisions',
+          filter: `company_id=eq.${companyId}`,
+        },
+        () => fetchPending()
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [companyId]);
+
   const loadDashboardData = async () => {
     if (!companyId) return;
     setLoading(true);

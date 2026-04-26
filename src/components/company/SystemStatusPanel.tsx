@@ -80,15 +80,15 @@ const StatusIcon = ({ health, className }: { health: Health; className?: string 
 };
 
 const formatRelative = (iso: string | null, t: (k: string, opts?: any) => string): string => {
-  if (!iso) return t("systemStatus.never");
+  if (!iso) return t("system_status.never");
   const ms = Date.now() - new Date(iso).getTime();
   const min = Math.round(ms / 60000);
-  if (min < 1) return t("systemStatus.justNow");
-  if (min < 60) return t("systemStatus.minAgo", { min });
+  if (min < 1) return t("system_status.justNow");
+  if (min < 60) return t("system_status.minAgo", { min });
   const h = Math.round(min / 60);
-  if (h < 24) return t("systemStatus.hoursAgo", { h });
+  if (h < 24) return t("system_status.hoursAgo", { h });
   const d = Math.round(h / 24);
-  return t("systemStatus.daysAgo", { d });
+  return t("system_status.daysAgo", { d });
 };
 
 export const SystemStatusPanel = ({ companyId, onNavigate }: SystemStatusPanelProps) => {
@@ -220,7 +220,7 @@ export const SystemStatusPanel = ({ companyId, onNavigate }: SystemStatusPanelPr
         <div className="flex items-center justify-between gap-2">
           <CardTitle className="text-base flex items-center gap-2">
             <Activity className="w-4 h-4 text-primary" />
-            {t("systemStatus.title")}
+            {t("system_status.title")}
           </CardTitle>
           <Button
             variant="ghost"
@@ -228,12 +228,12 @@ export const SystemStatusPanel = ({ companyId, onNavigate }: SystemStatusPanelPr
             onClick={handleRefresh}
             disabled={loading || refreshing}
             className="h-7 px-2"
-            aria-label={t("systemStatus.refresh")}
+            aria-label={t("system_status.refresh")}
           >
             <RefreshCw className={cn("w-3.5 h-3.5", refreshing && "animate-spin")} />
           </Button>
         </div>
-        <p className="text-xs text-muted-foreground">{t("systemStatus.subtitle")}</p>
+        <p className="text-xs text-muted-foreground">{t("system_status.subtitle")}</p>
       </CardHeader>
       <CardContent className="space-y-3">
         {/* Enterprise Brain */}
@@ -241,14 +241,14 @@ export const SystemStatusPanel = ({ companyId, onNavigate }: SystemStatusPanelPr
           <Brain className="w-4 h-4 text-primary mt-0.5 shrink-0" />
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-sm font-medium">{t("systemStatus.brain.title")}</span>
+              <span className="text-sm font-medium">{t("system_status.brain.title")}</span>
               <StatusIcon health={brainHealth} />
             </div>
             <p className="text-xs text-muted-foreground mt-0.5">
-              {brainHealth === "ok" && t("systemStatus.brain.active")}
-              {brainHealth === "warn" && t("systemStatus.brain.noAi")}
-              {brainHealth === "error" && t("systemStatus.brain.error")}
-              {brainHealth === "loading" && t("systemStatus.checking")}
+              {brainHealth === "ok" && t("system_status.brain.active")}
+              {brainHealth === "warn" && t("system_status.brain.noAi")}
+              {brainHealth === "error" && t("system_status.brain.error")}
+              {brainHealth === "loading" && t("system_status.checking")}
             </p>
           </div>
         </div>
@@ -258,14 +258,14 @@ export const SystemStatusPanel = ({ companyId, onNavigate }: SystemStatusPanelPr
           <Sparkles className="w-4 h-4 text-primary mt-0.5 shrink-0" />
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-sm font-medium">{t("systemStatus.contentGen.title")}</span>
+              <span className="text-sm font-medium">{t("system_status.contentGen.title")}</span>
               <StatusIcon health={aiContentHealth} />
             </div>
             <p className="text-xs text-muted-foreground mt-0.5">
-              {aiContentHealth === "ok" && t("systemStatus.contentGen.available")}
-              {aiContentHealth === "warn" && t("systemStatus.contentGen.degraded")}
-              {aiContentHealth === "error" && t("systemStatus.contentGen.unavailable")}
-              {aiContentHealth === "loading" && t("systemStatus.checking")}
+              {aiContentHealth === "ok" && t("system_status.contentGen.available")}
+              {aiContentHealth === "warn" && t("system_status.contentGen.degraded")}
+              {aiContentHealth === "error" && t("system_status.contentGen.unavailable")}
+              {aiContentHealth === "loading" && t("system_status.checking")}
             </p>
           </div>
         </div>
@@ -275,7 +275,7 @@ export const SystemStatusPanel = ({ companyId, onNavigate }: SystemStatusPanelPr
           <Share2 className="w-4 h-4 text-primary mt-0.5 shrink-0" />
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap mb-1.5">
-              <span className="text-sm font-medium">{t("systemStatus.social.title")}</span>
+              <span className="text-sm font-medium">{t("system_status.social.title")}</span>
               <StatusIcon health={socialHealth} />
               <Badge variant="outline" className="text-[10px]">
                 {connectedSocialCount}/{PLATFORMS.length}
@@ -308,7 +308,7 @@ export const SystemStatusPanel = ({ companyId, onNavigate }: SystemStatusPanelPr
                 className="px-0 h-6 text-[11px]"
                 onClick={() => onNavigate("marketing")}
               >
-                {t("systemStatus.social.connect")}
+                {t("system_status.social.connect")}
               </Button>
             )}
           </div>
@@ -319,19 +319,19 @@ export const SystemStatusPanel = ({ companyId, onNavigate }: SystemStatusPanelPr
           <Clock className="w-4 h-4 text-primary mt-0.5 shrink-0" />
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-sm font-medium">{t("systemStatus.autopilot.title")}</span>
+              <span className="text-sm font-medium">{t("system_status.autopilot.title")}</span>
               {!loading && (
                 <Badge variant="outline" className="text-[10px]">
                   {autopilot.status === "completed"
-                    ? t("systemStatus.autopilot.ok")
+                    ? t("system_status.autopilot.ok")
                     : autopilot.status === "failed"
-                      ? t("systemStatus.autopilot.failed")
-                      : autopilot.status || t("systemStatus.autopilot.unknown")}
+                      ? t("system_status.autopilot.failed")
+                      : autopilot.status || t("system_status.autopilot.unknown")}
                 </Badge>
               )}
             </div>
             <p className="text-xs text-muted-foreground mt-0.5">
-              {loading ? t("systemStatus.checking") : formatRelative(autopilot.lastCycleAt, t)}
+              {loading ? t("system_status.checking") : formatRelative(autopilot.lastCycleAt, t)}
             </p>
           </div>
         </div>
@@ -342,7 +342,7 @@ export const SystemStatusPanel = ({ companyId, onNavigate }: SystemStatusPanelPr
           <div className="flex-1 min-w-0">
             <div className="flex items-center justify-between gap-2 mb-1.5">
               <div className="flex items-center gap-2">
-                <span className="text-sm font-medium">{t("systemStatus.credits.title")}</span>
+                <span className="text-sm font-medium">{t("system_status.credits.title")}</span>
                 <StatusIcon health={creditsHealth} />
               </div>
               <span className="text-xs font-mono text-muted-foreground">
@@ -364,7 +364,7 @@ export const SystemStatusPanel = ({ companyId, onNavigate }: SystemStatusPanelPr
                 className="px-0 h-6 text-[11px] mt-1"
                 onClick={() => onNavigate("plan")}
               >
-                {t("systemStatus.credits.topUp")}
+                {t("system_status.credits.topUp")}
               </Button>
             )}
           </div>

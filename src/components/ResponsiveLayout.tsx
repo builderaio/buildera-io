@@ -365,6 +365,8 @@ const CompanyLayout = ({ profile, handleSignOut }: { profile: Profile; handleSig
       'ventas': '/company-dashboard?view=ventas',
       'crm': '/company-dashboard?view=ventas',
       'gobernanza': '/company-dashboard?view=gobernanza',
+      'aprobaciones': '/company-dashboard?view=aprobaciones',
+      'approvals': '/company-dashboard?view=aprobaciones',
       'departamentos': '/company-dashboard?view=departamentos',
       'activacion': '/company-dashboard?view=activacion',
       'profile': '/profile'

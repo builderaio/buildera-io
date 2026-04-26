@@ -134,6 +134,31 @@ serve(async (req) => {
       case 'get_next_queue_slot':
         result = await getNextQueueSlot(uploadPostApiKey, data);
         break;
+      // === Reddit detailed posts ===
+      case 'get_reddit_detailed_posts':
+        result = await getRedditDetailedPosts(uploadPostApiKey, data);
+        break;
+      // === FFmpeg jobs ===
+      case 'create_ffmpeg_job':
+        result = await createFfmpegJob(uploadPostApiKey, data);
+        break;
+      case 'get_ffmpeg_job_status':
+        result = await getFfmpegJobStatus(uploadPostApiKey, data);
+        break;
+      case 'get_ffmpeg_job_download':
+        result = await getFfmpegJobDownload(uploadPostApiKey, data);
+        break;
+      case 'get_ffmpeg_consumption':
+        result = await getFfmpegConsumption(uploadPostApiKey);
+        break;
+      // === Webhook notifications config ===
+      case 'configure_webhook_notifications':
+        result = await configureWebhookNotifications(uploadPostApiKey, data);
+        break;
+      // === Delete user profile ===
+      case 'delete_user_profile':
+        result = await deleteUserProfile(supabaseClient, user.id, uploadPostApiKey, data);
+        break;
       default:
         return new Response(
           JSON.stringify({ error: 'Acción no válida' }),
@@ -1746,4 +1771,171 @@ async function getNextQueueSlot(apiKey: string, data: any) {
   const result = await response.json();
   console.log('✅ Next queue slot:', result);
   return { success: true, ...result };
+}
+
+// =====================================================================
+// Reddit detailed posts
+// =====================================================================
+async function getRedditDetailedPosts(apiKey: string, data: any) {
+  const { companyUsername } = data || {};
+  if (!companyUsername) throw new Error('Missing companyUsername');
+
+  console.log(`👽 Getting Reddit detailed posts for: ${companyUsername}`);
+  const response = await fetch(
+    `https://api.upload-post.com/api/uploadposts/reddit/detailed-posts?profile_username=${encodeURIComponent(companyUsername)}`,
+    {
+      method: 'GET',
+      headers: { 'Authorization': AUTH_HEADER(apiKey), 'Content-Type': 'application/json' },
+    }
+  );
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Error getting Reddit detailed posts: ${response.status} - ${errorText}`);
+  }
+  return { success: true, ...(await response.json()) };
+}
+
+// =====================================================================
+// FFmpeg jobs (URL-based JSON variant)
+// =====================================================================
+async function createFfmpegJob(apiKey: string, data: any) {
+  const { files, full_command, output_extension, async_processing, webhook_url } = data || {};
+  if (!files?.length || !full_command || !output_extension) {
+    throw new Error('Missing required FFmpeg job fields: files, full_command, output_extension');
+  }
+
+  console.log(`🎞️ Creating FFmpeg job (${files.length} files)`);
+  const response = await fetch('https://api.upload-post.com/api/uploadposts/ffmpeg/jobs/upload', {
+    method: 'POST',
+    headers: { 'Authorization': AUTH_HEADER(apiKey), 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      files,
+      full_command,
+      output_extension,
+      ...(async_processing !== undefined ? { async_processing } : {}),
+      ...(webhook_url ? { webhook_url } : {}),
+    }),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Error creating FFmpeg job: ${response.status} - ${errorText}`);
+  }
+  return { success: true, ...(await response.json()) };
+}
+
+async function getFfmpegJobStatus(apiKey: string, data: any) {
+  const { jobId } = data || {};
+  if (!jobId) throw new Error('Missing jobId');
+
+  const response = await fetch(`https://api.upload-post.com/api/uploadposts/ffmpeg/jobs/${encodeURIComponent(jobId)}`, {
+    method: 'GET',
+    headers: { 'Authorization': AUTH_HEADER(apiKey), 'Content-Type': 'application/json' },
+  });
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Error getting FFmpeg job status: ${response.status} - ${errorText}`);
+  }
+  return { success: true, ...(await response.json()) };
+}
+
+async function getFfmpegJobDownload(apiKey: string, data: any) {
+  const { jobId } = data || {};
+  if (!jobId) throw new Error('Missing jobId');
+
+  // This endpoint typically returns a redirect / signed URL JSON
+  const response = await fetch(`https://api.upload-post.com/api/uploadposts/ffmpeg/jobs/${encodeURIComponent(jobId)}/download`, {
+    method: 'GET',
+    headers: { 'Authorization': AUTH_HEADER(apiKey) },
+    redirect: 'manual',
+  });
+
+  // If API returns a redirect, surface the location URL
+  const location = response.headers.get('location');
+  if (location) {
+    return { success: true, download_url: location };
+  }
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Error downloading FFmpeg job: ${response.status} - ${errorText}`);
+  }
+
+  // Try JSON, fallback to raw
+  const text = await response.text();
+  try {
+    return { success: true, ...JSON.parse(text) };
+  } catch {
+    return { success: true, raw: text };
+  }
+}
+
+async function getFfmpegConsumption(apiKey: string) {
+  const response = await fetch('https://api.upload-post.com/api/uploadposts/ffmpeg/consumption', {
+    method: 'GET',
+    headers: { 'Authorization': AUTH_HEADER(apiKey), 'Content-Type': 'application/json' },
+  });
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Error getting FFmpeg consumption: ${response.status} - ${errorText}`);
+  }
+  return { success: true, ...(await response.json()) };
+}
+
+// =====================================================================
+// Webhook notifications config
+// =====================================================================
+async function configureWebhookNotifications(apiKey: string, data: any) {
+  const { channels, webhook_url, telegram_chat_id, events } = data || {};
+
+  const body: Record<string, any> = {};
+  if (channels) body.channels = channels;
+  if (webhook_url) body.webhook_url = webhook_url;
+  if (telegram_chat_id) body.telegram_chat_id = telegram_chat_id;
+  if (events) body.events = events;
+
+  console.log('🔔 Configuring webhook notifications:', Object.keys(body));
+  const response = await fetch('https://api.upload-post.com/api/uploadposts/users/notifications', {
+    method: 'POST',
+    headers: { 'Authorization': AUTH_HEADER(apiKey), 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Error configuring webhook notifications: ${response.status} - ${errorText}`);
+  }
+  return { success: true, ...(await response.json()) };
+}
+
+// =====================================================================
+// Delete user profile (Upload-Post side) + cleanup local social_accounts
+// =====================================================================
+async function deleteUserProfile(supabaseClient: any, userId: string, apiKey: string, data: any) {
+  const { companyUsername } = data || {};
+  if (!companyUsername) throw new Error('Missing companyUsername');
+
+  console.log(`🗑️ Deleting Upload-Post profile: ${companyUsername}`);
+  const response = await fetch('https://api.upload-post.com/api/uploadposts/users', {
+    method: 'DELETE',
+    headers: { 'Authorization': AUTH_HEADER(apiKey), 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username: companyUsername }),
+  });
+
+  if (!response.ok && response.status !== 404) {
+    const errorText = await response.text();
+    throw new Error(`Error deleting user profile: ${response.status} - ${errorText}`);
+  }
+
+  // Cleanup local connections for this username
+  const { error: cleanupError } = await supabaseClient
+    .from('social_accounts')
+    .delete()
+    .eq('user_id', userId)
+    .eq('company_username', companyUsername);
+
+  if (cleanupError) {
+    console.warn('⚠️ Could not cleanup social_accounts:', cleanupError);
+  }
+
+  return { success: true, deleted: companyUsername };
 }

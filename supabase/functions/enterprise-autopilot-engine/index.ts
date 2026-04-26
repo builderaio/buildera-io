@@ -2290,7 +2290,7 @@ async function runDepartmentCycle(companyId: string, department: string, deptCon
           }
         } else if (accountsToScrape.length === 0) {
           // No connected accounts at all
-          await supabase.from('autopilot_decisions').insert({
+          const { error: csErr2 } = await supabase.from('autopilot_decisions').insert({
             company_id: companyId,
             cycle_id: cycleId,
             decision_type: 'cold_start_content',
@@ -2301,6 +2301,7 @@ async function runDepartmentCycle(companyId: string, department: string, deptCon
             guardrail_result: 'needs_action',
             expected_impact: { suggested_action: 'generate_initial_content' },
           });
+          if (csErr2) console.error(`❌ autopilot_decisions INSERT FAILED (cold_start_no_accounts, ${department}):`, csErr2);
           await logExecution(companyId, cycleId, department, 'sense', 'needs_bootstrap', {
             error_message: 'No connected social accounts. Bootstrap impossible.',
             context_snapshot: senseData,

@@ -72,48 +72,6 @@ const UnifiedAgentsView = ({ profile }: UnifiedAgentsViewProps) => {
     }
   }, [companyId]);
 
-  const loadCompanyData = async () => {
-    setLoading(true);
-    try {
-      // Buscar primero la empresa primaria del usuario via company_members
-      const { data: primaryMember } = await supabase
-        .from('company_members')
-        .select('company_id')
-        .eq('user_id', profile.user_id)
-        .eq('is_primary', true)
-        .maybeSingle();
-
-      let resolvedCompanyId = primaryMember?.company_id || null;
-
-      // Fallback: cualquier membresía
-      if (!resolvedCompanyId) {
-        const { data: anyMember } = await supabase
-          .from('company_members')
-          .select('company_id')
-          .eq('user_id', profile.user_id)
-          .limit(1)
-          .maybeSingle();
-        resolvedCompanyId = anyMember?.company_id || null;
-      }
-
-      // Último fallback: empresa creada por el usuario
-      if (!resolvedCompanyId) {
-        const { data: company } = await supabase
-          .from('companies')
-          .select('id')
-          .eq('created_by', profile.user_id)
-          .maybeSingle();
-        resolvedCompanyId = company?.id || null;
-      }
-
-      setCompanyId(resolvedCompanyId);
-    } catch (error) {
-      console.error('Error loading company:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const loadUsageStats = async () => {
     if (!companyId) return;
 

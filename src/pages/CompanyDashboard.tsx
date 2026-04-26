@@ -440,6 +440,11 @@ const CompanyDashboard = () => {
       case "governance":
         return <GovernanceDashboard profile={profile} />;
 
+      // === APPROVAL CENTER ===
+      case "aprobaciones":
+      case "approvals":
+        return <ApprovalCenter />;
+
       // === DEPARTMENT CONFIG ===
       case "departamentos":
       case "department-config":

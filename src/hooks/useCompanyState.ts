@@ -99,7 +99,7 @@ export const useCompanyState = (companyId?: string, userId?: string) => {
         supabase.from('social_accounts').select('id').eq('user_id', userId),
         supabase.from('company_branding').select('*').eq('company_id', companyId).maybeSingle(),
         // Enterprise queries
-        supabase.from('crm_deals').select('id, stage, amount').eq('company_id', companyId),
+        supabase.from('crm_deals').select('id, stage_id, amount').eq('company_id', companyId),
         supabase.from('crm_contacts').select('id').eq('company_id', companyId),
         supabase.from('crm_activities').select('id').eq('company_id', companyId).gte('created_at', thirtyDaysAgo),
         supabase.from('company_department_config').select('*').eq('company_id', companyId),

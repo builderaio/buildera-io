@@ -20,6 +20,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useTranslation } from "react-i18next";
 import { usePlatformAgents, PlatformAgent } from "@/hooks/usePlatformAgents";
 import { useCompanyCredits } from "@/hooks/useCompanyCredits";
+import { useCompanyManagement } from "@/hooks/useCompanyManagement";
 import { AgentInteractionPanel } from "@/components/agents/AgentInteractionPanel";
 import { AgentIconRenderer } from "@/components/agents/AgentIconRenderer";
 import { cn } from "@/lib/utils";
@@ -38,8 +39,8 @@ interface AgentUsageStats {
 
 const UnifiedAgentsView = ({ profile }: UnifiedAgentsViewProps) => {
   const { t } = useTranslation(['common', 'company']);
-  const [companyId, setCompanyId] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { primaryCompany, loading: companyLoading } = useCompanyManagement();
+  const companyId = primaryCompany?.id ?? null;
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [selectedAgent, setSelectedAgent] = useState<PlatformAgent | null>(null);
@@ -66,60 +67,10 @@ const UnifiedAgentsView = ({ profile }: UnifiedAgentsViewProps) => {
   }, [agents]);
 
   useEffect(() => {
-    if (profile?.user_id) {
-      loadCompanyData();
-    } else {
-      setLoading(false);
-    }
-  }, [profile?.user_id]);
-
-  useEffect(() => {
     if (companyId) {
       loadUsageStats();
     }
   }, [companyId]);
-
-  const loadCompanyData = async () => {
-    setLoading(true);
-    try {
-      // Buscar primero la empresa primaria del usuario via company_members
-      const { data: primaryMember } = await supabase
-        .from('company_members')
-        .select('company_id')
-        .eq('user_id', profile.user_id)
-        .eq('is_primary', true)
-        .maybeSingle();
-
-      let resolvedCompanyId = primaryMember?.company_id || null;
-
-      // Fallback: cualquier membresía
-      if (!resolvedCompanyId) {
-        const { data: anyMember } = await supabase
-          .from('company_members')
-          .select('company_id')
-          .eq('user_id', profile.user_id)
-          .limit(1)
-          .maybeSingle();
-        resolvedCompanyId = anyMember?.company_id || null;
-      }
-
-      // Último fallback: empresa creada por el usuario
-      if (!resolvedCompanyId) {
-        const { data: company } = await supabase
-          .from('companies')
-          .select('id')
-          .eq('created_by', profile.user_id)
-          .maybeSingle();
-        resolvedCompanyId = company?.id || null;
-      }
-
-      setCompanyId(resolvedCompanyId);
-    } catch (error) {
-      console.error('Error loading company:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const loadUsageStats = async () => {
     if (!companyId) return;
@@ -261,7 +212,7 @@ const UnifiedAgentsView = ({ profile }: UnifiedAgentsViewProps) => {
     );
   };
 
-  if (loading || agentsLoading) {
+  if (companyLoading || agentsLoading) {
     return (
       <div className="min-h-[60vh] flex items-center justify-center">
         <div className="text-center space-y-4">

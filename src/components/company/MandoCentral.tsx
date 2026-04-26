@@ -9,6 +9,7 @@ import { useTranslation } from "react-i18next";
 import { usePlatformAgents, PlatformAgent } from "@/hooks/usePlatformAgents";
 import { useCompanyCredits } from "@/hooks/useCompanyCredits";
 import { useCompanyState } from "@/hooks/useCompanyState";
+import { useCompany } from "@/contexts/CompanyContext";
 import { useNextBestAction } from "@/hooks/useNextBestAction";
 import { CompanyStateCard } from "./CompanyStateCard";
 import { NextBestActionCard, RecommendationsList } from "./NextBestActionCard";
@@ -126,12 +127,15 @@ const formatLocalizedDate = (language: string): string => {
 const MandoCentral = ({ profile, onNavigate }: MandoCentralProps) => {
   const { t, i18n } = useTranslation(['common', 'company']);
   const [loading, setLoading] = useState(true);
-  const [companyId, setCompanyId] = useState<string | null>(null);
   const [recentActivity, setRecentActivity] = useState<ActivityLog[]>([]);
   const [selectedAgent, setSelectedAgent] = useState<PlatformAgent | null>(null);
   const [agentPanelOpen, setAgentPanelOpen] = useState(false);
   const navigate = useNavigate();
-  
+
+  // Use centralized company context (handles users with multiple companies safely)
+  const { company, loading: companyLoading } = useCompany();
+  const companyId = company?.id || null;
+
   const { agents, enabledAgents: enabledAgentIds } = usePlatformAgents(companyId || undefined);
   const { totalCredits, usedCredits, availableCredits, refetch: refetchCredits } = useCompanyCredits(companyId || undefined, profile?.user_id);
   const companyState = useCompanyState(companyId || undefined, profile?.user_id);
@@ -147,42 +151,33 @@ const MandoCentral = ({ profile, onNavigate }: MandoCentralProps) => {
   });
 
   useEffect(() => {
-    if (profile?.user_id) {
-      loadDashboardData();
+    if (companyLoading) return;
+    if (companyId) {
+      loadDashboardData(companyId);
     } else {
       setLoading(false);
     }
-  }, [profile?.user_id]);
+  }, [companyId, companyLoading]);
 
-  const loadDashboardData = async () => {
+  const loadDashboardData = async (cid: string) => {
     setLoading(true);
     try {
-      const { data: company } = await supabase
-        .from('companies')
-        .select('id')
-        .eq('created_by', profile.user_id)
-        .maybeSingle();
-      
-      setCompanyId(company?.id || null);
+      const { data: usageLogs } = await supabase
+        .from('agent_usage_log')
+        .select(`
+          id, 
+          created_at, 
+          status, 
+          output_summary, 
+          error_message,
+          credits_consumed,
+          platform_agents(name, icon)
+        `)
+        .eq('company_id', cid)
+        .order('created_at', { ascending: false })
+        .limit(5);
 
-      if (company?.id) {
-        const { data: usageLogs } = await supabase
-          .from('agent_usage_log')
-          .select(`
-            id, 
-            created_at, 
-            status, 
-            output_summary, 
-            error_message,
-            credits_consumed,
-            platform_agents(name, icon)
-          `)
-          .eq('company_id', company.id)
-          .order('created_at', { ascending: false })
-          .limit(5);
-
-        setRecentActivity((usageLogs as ActivityLog[]) || []);
-      }
+      setRecentActivity((usageLogs as ActivityLog[]) || []);
     } catch (error) {
       console.error('Error loading dashboard:', error);
     } finally {
@@ -391,7 +386,7 @@ const MandoCentral = ({ profile, onNavigate }: MandoCentralProps) => {
         userId={profile?.user_id}
         onExecutionComplete={() => {
           refetchCredits();
-          loadDashboardData();
+          if (companyId) loadDashboardData(companyId);
         }}
       />
     </div>

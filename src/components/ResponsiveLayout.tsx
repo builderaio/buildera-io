@@ -287,10 +287,13 @@ const CompanyLayout = ({ profile, handleSignOut }: { profile: Profile; handleSig
   const { t } = useTranslation(['common']);
   const [onboardingComplete, setOnboardingComplete] = useState(false);
   const [isInOnboarding, setIsInOnboarding] = useState(false);
-  const [companyId, setCompanyId] = useState<string | null>(null);
   const [selectedAgent, setSelectedAgent] = useState<PlatformAgent | null>(null);
   const [agentPanelOpen, setAgentPanelOpen] = useState(false);
   const checkOnboardingInFlight = useRef(false);
+
+  // Use centralized company context (handles users with multiple companies safely)
+  const { company: ctxCompany } = useCompany();
+  const companyId = ctxCompany?.id || null;
   
   const { enabledAgents } = usePlatformAgents(companyId || undefined);
   const { availableCredits, refetch: refetchCredits } = useCompanyCredits(companyId || undefined, profile?.user_id);
@@ -312,14 +315,7 @@ const CompanyLayout = ({ profile, handleSignOut }: { profile: Profile; handleSig
           .maybeSingle();
           
         setOnboardingComplete(!!data?.onboarding_completed_at || !!data?.dna_empresarial_completed);
-        
-        const { data: company } = await supabase
-          .from('companies')
-          .select('id')
-          .eq('created_by', profile.user_id)
-          .maybeSingle();
-        
-        if (company?.id) setCompanyId(company.id);
+        // companyId is now derived from CompanyContext (handles users with multiple companies)
       } finally {
         checkOnboardingInFlight.current = false;
       }

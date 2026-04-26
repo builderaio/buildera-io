@@ -112,13 +112,15 @@ const CompanyDashboard = () => {
         if (import.meta.env.DEV) console.log('✅ Usuario ya completó onboarding, cargando perfil y continuando');
         
         // Check if user should see activation wizard (journey_current_step <= 2)
-        const { data: companyData } = await supabase
-          .from('companies')
-          .select('journey_current_step')
-          .eq('created_by', session.user.id)
+        // Use primary company via company_members to safely handle users with multiple companies
+        const { data: primaryMember } = await supabase
+          .from('company_members')
+          .select('company_id, companies(journey_current_step)')
+          .eq('user_id', session.user.id)
+          .eq('is_primary', true)
           .maybeSingle();
         
-        const journeyStep = companyData?.journey_current_step || 1;
+        const journeyStep = (primaryMember?.companies as any)?.journey_current_step || 1;
         
         const { data: profileData, error: profileError } = await supabase
           .from('profiles')

@@ -159,6 +159,36 @@ serve(async (req) => {
       case 'delete_user_profile':
         result = await deleteUserProfile(supabaseClient, user.id, uploadPostApiKey, data);
         break;
+      // === AutoDM Monitors (Instagram lead capture 24/7) ===
+      case 'start_autodm_monitor':
+        result = await startAutoDMMonitor(supabaseClient, user.id, uploadPostApiKey, data);
+        break;
+      case 'list_autodm_monitors':
+        result = await listAutoDMMonitors(supabaseClient, user.id, uploadPostApiKey, data);
+        break;
+      case 'pause_autodm_monitor':
+        result = await pauseAutoDMMonitor(supabaseClient, user.id, uploadPostApiKey, data);
+        break;
+      case 'resume_autodm_monitor':
+        result = await resumeAutoDMMonitor(supabaseClient, user.id, uploadPostApiKey, data);
+        break;
+      case 'stop_autodm_monitor':
+        result = await stopAutoDMMonitor(supabaseClient, user.id, uploadPostApiKey, data);
+        break;
+      case 'delete_autodm_monitor':
+        result = await deleteAutoDMMonitor(supabaseClient, user.id, uploadPostApiKey, data);
+        break;
+      case 'get_autodm_monitor_logs':
+        result = await getAutoDMMonitorLogs(supabaseClient, user.id, uploadPostApiKey, data);
+        break;
+      // === Google Business Profile ===
+      case 'get_google_business_locations':
+        result = await getGoogleBusinessLocations(uploadPostApiKey, data);
+        break;
+      // === Public reply to comment (visible) ===
+      case 'public_reply_comment':
+        result = await publicReplyComment(uploadPostApiKey, data);
+        break;
       default:
         return new Response(
           JSON.stringify({ error: 'Acción no válida' }),

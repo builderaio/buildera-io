@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { 
   TrendingUp, TrendingDown, Minus, Target, Zap, Bot,
   ArrowRight, Sparkles, Clock, CheckCircle2, XCircle, Loader2,
-  BarChart3, Users, MessageSquare, ShoppingCart, RefreshCw, Brain,
+  BarChart3, Users, MessageSquare, ShoppingCart, RefreshCw, Brain, ClipboardCheck,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -240,6 +240,7 @@ const BusinessHealthDashboard = ({ profile, onNavigate }: BusinessHealthDashboar
   const [selectedAgent, setSelectedAgent] = useState<PlatformAgent | null>(null);
   const [agentPanelOpen, setAgentPanelOpen] = useState(false);
   const [primaryObjective, setPrimaryObjective] = useState<string | null>(null);
+  const [pendingApprovals, setPendingApprovals] = useState<number>(0);
 
   const { agents, enabledAgents: enabledAgentIds } = usePlatformAgents(companyId || undefined);
   const { availableCredits, refetch: refetchCredits } = useCompanyCredits(companyId || undefined, profile?.user_id);
@@ -264,6 +265,41 @@ const BusinessHealthDashboard = ({ profile, onNavigate }: BusinessHealthDashboar
     } else {
       setLoading(false);
     }
+  }, [companyId]);
+
+  // Pending approvals counter (with realtime sync)
+  useEffect(() => {
+    if (!companyId) {
+      setPendingApprovals(0);
+      return;
+    }
+    const fetchPending = async () => {
+      const { count } = await supabase
+        .from('autopilot_decisions')
+        .select('id', { count: 'exact', head: true })
+        .eq('company_id', companyId)
+        .eq('action_taken', false);
+      setPendingApprovals(count || 0);
+    };
+    fetchPending();
+
+    const channel = supabase
+      .channel(`approvals_dashboard_${companyId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'autopilot_decisions',
+          filter: `company_id=eq.${companyId}`,
+        },
+        () => fetchPending()
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [companyId]);
 
   const loadDashboardData = async () => {
@@ -475,6 +511,46 @@ const BusinessHealthDashboard = ({ profile, onNavigate }: BusinessHealthDashboar
       {/* Enterprise Autopilot Status Card */}
       {companyId && (
         <EnterpriseAutopilotStatusCard companyId={companyId} departments={deptConfigs} onNavigate={handleNavigate} />
+      )}
+
+      {/* Approval Center quick access */}
+      {companyId && (
+        <Card
+          className={cn(
+            "transition cursor-pointer hover:shadow-md",
+            pendingApprovals > 0
+              ? "border-primary/40 bg-primary/5"
+              : "border-dashed"
+          )}
+          onClick={() => handleNavigate('aprobaciones')}
+        >
+          <CardContent className="py-4 px-4 flex items-center gap-4">
+            <div className={cn(
+              "rounded-full p-2.5 shrink-0",
+              pendingApprovals > 0 ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground"
+            )}>
+              <ClipboardCheck className="w-5 h-5" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h3 className="font-semibold text-sm md:text-base">
+                  {t('company:approvals.title', 'Centro de Aprobaciones')}
+                </h3>
+                {pendingApprovals > 0 && (
+                  <Badge variant="default">
+                    {pendingApprovals} {t('company:approvals.pendingShort', 'pendientes')}
+                  </Badge>
+                )}
+              </div>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                {pendingApprovals > 0
+                  ? t('company:approvals.cta.pending', 'Acciones del Autopilot esperando tu autorización')
+                  : t('company:approvals.cta.empty', 'Sistema en modo observación. Las próximas acciones aparecerán aquí.')}
+              </p>
+            </div>
+            <ArrowRight className="w-4 h-4 text-muted-foreground shrink-0" />
+          </CardContent>
+        </Card>
       )}
 
       {/* Enterprise Welcome (show once when departments exist but none active) */}

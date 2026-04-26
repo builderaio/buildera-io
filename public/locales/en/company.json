@@ -405,5 +405,44 @@
     "unassigned": "Unassigned",
     "noMembers": "Add team members first.",
     "info": "M-shaped: generalists who orchestrate AI agents. T-shaped: deep domain specialists. Frontline: operational workers empowered with AI tools."
+  },
+  "approvals": {
+    "title": "Approval Center",
+    "subtitle": "Review and authorize the actions that the Autopilot has pending.",
+    "pendingShort": "pending",
+    "unknownAgent": "Unspecified agent",
+    "cta": {
+      "pending": "Autopilot actions awaiting your authorization",
+      "empty": "System in observation mode. Upcoming actions will appear here."
+    },
+    "empty": {
+      "title": "System in observation mode",
+      "description": "Upcoming actions proposed by the Autopilot will appear here for your review."
+    },
+    "actions": {
+      "approve": "Approve",
+      "reject": "Reject",
+      "detail": "View detail"
+    },
+    "risk": {
+      "low": "LOW",
+      "medium": "MEDIUM",
+      "high": "HIGH",
+      "critical": "CRITICAL"
+    },
+    "detail": {
+      "title": "Action detail",
+      "reasoning": "Reasoning",
+      "parameters": "Action parameters",
+      "expectedImpact": "Expected impact"
+    },
+    "toast": {
+      "approved": "Action approved",
+      "rejected": "Action rejected"
+    },
+    "errors": {
+      "load": "Could not load pending actions",
+      "action": "Could not register the decision"
+    }
   }
 }

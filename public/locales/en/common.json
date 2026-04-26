@@ -809,7 +809,8 @@
       "security": "Security",
       "agents": "Agents",
       "plan": "My Plan",
-      "notifications": "Alerts"
+      "notifications": "Alerts",
+      "system": "System"
     },
     "team": {
       "title": "Team Members",

@@ -85,7 +85,7 @@ type Step = 1 | 2 | 3 | 4;
 
 export const DnaSetupChecklist = ({ onCompleted, onNavigate }: DnaSetupChecklistProps) => {
   const { t } = useTranslation(["common", "company"]);
-  const { company, refetch: refetchCompany } = useCompany();
+  const { company, refreshCompany } = useCompany();
   const { agents } = usePlatformAgents(company?.id);
 
   const [openStep, setOpenStep] = useState<Step | null>(null);
@@ -162,7 +162,7 @@ export const DnaSetupChecklist = ({ onCompleted, onNavigate }: DnaSetupChecklist
         })
         .eq("id", company.id);
       if (error) throw error;
-      await refetchCompany?.();
+      await refreshCompany?.();
       toast.success(t("common:dnaSetup.toasts.saved", "Datos guardados"));
       setOpenStep(null);
     } catch (e: any) {
@@ -183,7 +183,7 @@ export const DnaSetupChecklist = ({ onCompleted, onNavigate }: DnaSetupChecklist
         .update({ primary_challenge: challenge })
         .eq("id", company.id);
       if (error) throw error;
-      await refetchCompany?.();
+      await refreshCompany?.();
       toast.success(t("common:dnaSetup.toasts.challengeSaved", "Reto guardado"));
       setOpenStep(null);
     } catch (e: any) {
@@ -239,7 +239,7 @@ Devuelve SOLO una lista numerada (1., 2., 3.) sin texto adicional, sin asterisco
         .update({ mission: mission.trim() })
         .eq("id", company.id);
       if (error) throw error;
-      await refetchCompany?.();
+      await refreshCompany?.();
       toast.success(t("common:dnaSetup.toasts.missionSaved", "Misión guardada"));
       setOpenStep(null);
     } catch (e: any) {
@@ -300,7 +300,7 @@ Devuelve SOLO el internal_code del agente recomendado (una sola palabra/identifi
         .update({ recommended_agent_code: chosenCode })
         .eq("id", company.id);
       if (upErr) throw upErr;
-      await refetchCompany?.();
+      await refreshCompany?.();
     } catch (e: any) {
       console.error(e);
       toast.error(t("common:dnaSetup.errors.aiFailed", "Generación con IA no disponible"));
@@ -326,7 +326,7 @@ Devuelve SOLO el internal_code del agente recomendado (una sola palabra/identifi
         })
         .eq("id", company.id);
       if (error) throw error;
-      await refetchCompany?.();
+      await refreshCompany?.();
       toast.success(
         t(
           "common:dnaSetup.toasts.completed",

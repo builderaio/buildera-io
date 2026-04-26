@@ -467,7 +467,12 @@ const BusinessHealthDashboard = ({ profile, onNavigate }: BusinessHealthDashboar
           </p>
         </div>
 
-        {/* Hero activation card */}
+        {/* DNA Setup checklist (post-onboarding) */}
+        {!(company as any)?.dna_setup_completed && (
+          <DnaSetupChecklist onNavigate={(view) => handleNavigate(view)} />
+        )}
+
+
         <Card className="border-primary/30 bg-gradient-to-br from-primary/10 via-secondary/5 to-transparent overflow-hidden">
           <CardContent className="p-6 sm:p-8">
             <div className="flex items-start gap-4">

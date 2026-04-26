@@ -66,8 +66,6 @@ serve(async (req) => {
 
     console.log('📝 Datos recibidos:', body);
 
-    const body = await req.json();
-    console.log('📝 Datos recibidos:', body);
 
     // Nueva ruta: generación libre de contenido con prompt + contexto
     if (body.prompt) {

@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { 
   TrendingUp, TrendingDown, Minus, Target, Zap, Bot,
   ArrowRight, Sparkles, Clock, CheckCircle2, XCircle, Loader2,
-  BarChart3, Users, MessageSquare, ShoppingCart, RefreshCw, Brain,
+  BarChart3, Users, MessageSquare, ShoppingCart, RefreshCw, Brain, ClipboardCheck,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";

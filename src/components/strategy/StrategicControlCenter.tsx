@@ -24,6 +24,7 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { BusinessModelType } from '@/types/playToWin';
 import AgenticMaturityAssessment from './AgenticMaturityAssessment';
+import StrategicControlOperationsPanel from './StrategicControlOperationsPanel';
 
 interface StrategicControlCenterProps {
   profile: any;

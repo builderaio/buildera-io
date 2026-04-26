@@ -189,6 +189,11 @@ export default function StrategicControlCenter({ profile }: StrategicControlCent
         </div>
       </motion.div>
 
+      {/* ═══ OPERATIONS PANEL — credits, departments, approvals, decisions, guardrails ═══ */}
+      <motion.div {...fadeUp(0.02)}>
+        <StrategicControlOperationsPanel companyId={companyId} onNavigate={handleNavigate} />
+      </motion.div>
+
       {/* ═══ STRATEGIC PROFILE BLOCK ═══ */}
       <motion.div {...fadeUp(0.03)}>
         <Card className="border-primary/20 bg-gradient-to-r from-primary/5 via-transparent to-primary/3">

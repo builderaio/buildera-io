@@ -12,6 +12,8 @@ import { ReportBuilder } from "./marketing/ReportBuilder";
 import { SocialListeningPanel } from "./marketing/SocialListeningPanel";
 import { UTMDashboard } from "./marketing/UTMDashboard";
 import { SocialAutomationRules } from "./marketing/SocialAutomationRules";
+import { AutoDMMonitors } from "./marketing/AutoDMMonitors";
+import { WebhookEventsLog } from "./marketing/WebhookEventsLog";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -21,7 +23,7 @@ interface CrearContentHubProps {
   onNavigateTab: (tab: string) => void;
 }
 
-type ActiveView = null | "campaign" | "creative-studio" | "smart-links" | "library" | "reports" | "listening" | "utm" | "automation";
+type ActiveView = null | "campaign" | "creative-studio" | "smart-links" | "library" | "reports" | "listening" | "utm" | "automation" | "autodm" | "events";
 
 const ADVANCED_TOOLS = [
   { id: "campaign" as ActiveView, labelKey: "hub.crear.campaign.title", icon: "🎯" },
@@ -32,6 +34,8 @@ const ADVANCED_TOOLS = [
   { id: "listening" as ActiveView, labelKey: "hub.advancedTools.listening", icon: "👂" },
   { id: "utm" as ActiveView, labelKey: "hub.advancedTools.attribution", icon: "🏷️" },
   { id: "automation" as ActiveView, labelKey: "hub.advancedTools.automation", icon: "⚙️" },
+  { id: "autodm" as ActiveView, labelKey: "hub.advancedTools.autodm", icon: "💬" },
+  { id: "events" as ActiveView, labelKey: "hub.advancedTools.events", icon: "📡" },
 ];
 
 export const CrearContentHub = ({ profile, selectedPlatform, onNavigateTab }: CrearContentHubProps) => {
@@ -52,6 +56,8 @@ export const CrearContentHub = ({ profile, selectedPlatform, onNavigateTab }: Cr
         case "listening": return <SocialListeningPanel profile={profile} companyId={profile?.company_id} />;
         case "utm": return <UTMDashboard companyId={profile?.company_id} />;
         case "automation": return <SocialAutomationRules companyId={profile?.company_id} />;
+        case "autodm": return <AutoDMMonitors companyId={profile?.company_id} />;
+        case "events": return <WebhookEventsLog companyId={profile?.company_id} />;
         default: return null;
       }
     };

@@ -805,7 +805,8 @@
       "security": "Seguridad",
       "agents": "Agentes",
       "plan": "Mi Plan",
-      "notifications": "Alertas"
+      "notifications": "Alertas",
+      "system": "Sistema"
     },
     "team": {
       "title": "Miembros del Equipo",
@@ -1881,6 +1882,43 @@
       "actionsTaken": "{{count}} acción(es) ejecutada(s)",
       "contentGenerated": "{{count}} pieza(s) de contenido generada(s)",
       "observation": "Observación de fase registrada"
+    }
+  },
+  "system_status": {
+    "title": "Estado del sistema",
+    "subtitle": "Estado en tiempo real de los servicios críticos",
+    "refresh": "Actualizar",
+    "checking": "Comprobando…",
+    "never": "Nunca ejecutado",
+    "justNow": "Ahora mismo",
+    "minAgo": "hace {{min}} min",
+    "hoursAgo": "hace {{h}} h",
+    "daysAgo": "hace {{d}} d",
+    "brain": {
+      "title": "Enterprise Brain",
+      "active": "Activo y operando",
+      "noAi": "Sin proveedor de IA configurado",
+      "error": "Error en el último ciclo — revisa la configuración"
+    },
+    "contentGen": {
+      "title": "Generación de contenido",
+      "available": "Disponible",
+      "degraded": "Disponibilidad limitada — servicio parcialmente accesible",
+      "unavailable": "No disponible — falta API key o el servicio no responde"
+    },
+    "social": {
+      "title": "Redes sociales",
+      "connect": "Conectar más redes →"
+    },
+    "autopilot": {
+      "title": "Último ciclo del Autopilot",
+      "ok": "Completado",
+      "failed": "Falló",
+      "unknown": "Sin datos"
+    },
+    "credits": {
+      "title": "Créditos disponibles",
+      "topUp": "Recargar créditos →"
     }
   }
 }

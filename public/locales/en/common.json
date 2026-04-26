@@ -202,7 +202,8 @@
     "autopilotActive": "Active",
     "autopilotInactive": "Inactive",
     "enterpriseBrain": "Enterprise Brain",
-    "approvals": "Approvals"
+    "approvals": "Approvals",
+    "systemActivity": "System Activity"
   },
   "onboarding": {
     "checkingData": "Checking your company data...",
@@ -1808,6 +1809,25 @@
       "challengeSaved": "Challenge saved",
       "missionSaved": "Mission saved",
       "completed": "Your Business DNA is set. Autopilot is now watching your company."
+    }
+  },
+  "systemActivity": {
+    "title": "System Activity",
+    "subtitle": "Every Autopilot phase — SENSE, THINK, GUARD, ACT, LEARN — logged in real time.",
+    "live": "Live",
+    "approved": "approved",
+    "rejected": "rejected",
+    "pending": "pending",
+    "empty": {
+      "title": "The system is observing your company",
+      "body": "The system has been in SENSE mode for {{hours}} hours. First decisions will appear here.",
+      "hint": "Autopilot prioritizes observation before action — this is normal in early cycles."
+    },
+    "row": {
+      "decisionsMade": "{{count}} decision(s) generated",
+      "actionsTaken": "{{count}} action(s) executed",
+      "contentGenerated": "{{count}} content piece(s) generated",
+      "observation": "Phase observation logged"
     }
   }
 }

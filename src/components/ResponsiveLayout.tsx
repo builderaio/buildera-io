@@ -384,6 +384,7 @@ const CompanyLayout = ({ profile, handleSignOut }: { profile: Profile; handleSig
   // Sidebar navigation with Lucide icons (no emojis)
   const activeDeptCount = departments.filter(d => d.autopilot_enabled).length;
   const [journeyStep, setJourneyStep] = useState<number>(1);
+  const [pendingApprovals, setPendingApprovals] = useState<number>(0);
   const { checkAndAdvance } = useJourneyProgression(companyId || undefined);
 
   // Fetch journey step and auto-advance on load
@@ -412,6 +413,41 @@ const CompanyLayout = ({ profile, handleSignOut }: { profile: Profile; handleSig
     fetchAndAdvance();
   }, [companyId, checkAndAdvance]);
 
+  // Track pending autopilot approvals for sidebar badge
+  useEffect(() => {
+    if (!companyId) {
+      setPendingApprovals(0);
+      return;
+    }
+    const fetchPending = async () => {
+      const { count } = await supabase
+        .from('autopilot_decisions')
+        .select('id', { count: 'exact', head: true })
+        .eq('company_id', companyId)
+        .eq('action_taken', false);
+      setPendingApprovals(count || 0);
+    };
+    fetchPending();
+
+    const channel = supabase
+      .channel(`approvals_badge_${companyId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'autopilot_decisions',
+          filter: `company_id=eq.${companyId}`,
+        },
+        () => fetchPending()
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [companyId]);
+
   const allSidebarItems = [
     { id: 'panel', label: t('common:sidebar.commandCenter', 'Centro de Comando'), icon: Activity, badge: null, minStep: 1 },
     { id: 'marketing-hub', label: t('common:sidebar.marketingHub', 'Marketing Hub'), icon: Megaphone, badge: null, minStep: 1 },
@@ -419,6 +455,7 @@ const CompanyLayout = ({ profile, handleSignOut }: { profile: Profile; handleSig
     { id: 'strategic-control', label: t('common:sidebar.strategicControl', 'Control Estratégico'), icon: Crosshair, badge: null, minStep: 2 },
     { id: 'agentes', label: t('common:sidebar.aiAgents', 'Agentes IA'), icon: Bot, badge: null, minStep: 3 },
     { id: 'autopilot', label: t('common:sidebar.enterpriseBrain', 'Cerebro Empresarial'), icon: Brain, badge: activeDeptCount > 0 ? `${activeDeptCount}` : null, minStep: 3 },
+    { id: 'aprobaciones', label: t('common:sidebar.approvals', 'Aprobaciones'), icon: ClipboardCheck, badge: pendingApprovals > 0 ? `${pendingApprovals}` : null, minStep: 3 },
     { id: 'gobernanza', label: t('common:sidebar.governance', 'Gobernanza'), icon: Shield, badge: null, minStep: 3 },
     { id: 'ventas', label: t('common:sidebar.salesCRM', 'Ventas / CRM'), icon: Handshake, badge: null, minStep: 4 },
     { id: 'departamentos', label: t('common:sidebar.departments', 'Departamentos'), icon: Settings, badge: null, minStep: 4 },

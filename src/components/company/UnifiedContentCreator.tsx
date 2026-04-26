@@ -27,7 +27,7 @@ interface Props {
 
 export default function UnifiedContentCreator({ profile, topPosts = [], selectedPlatform = 'general', prepopulatedContent, onContentUsed }: Props) {
   const { toast } = useToast();
-  const { t, i18n } = useTranslation();
+  const { t, i18n } = useTranslation(['translation', 'errors']);
   const [activeTab, setActiveTab] = useState<'insights' | 'create' | 'library'>('insights');
   const [createMode, setCreateMode] = useState<'ai' | 'manual'>('ai');
   

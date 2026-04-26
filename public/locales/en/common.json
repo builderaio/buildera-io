@@ -1829,5 +1829,42 @@
       "contentGenerated": "{{count}} content piece(s) generated",
       "observation": "Phase observation logged"
     }
+  },
+  "system_status": {
+    "title": "System status",
+    "subtitle": "Real-time health of critical services",
+    "refresh": "Refresh",
+    "checking": "Checking…",
+    "never": "Never run",
+    "justNow": "Just now",
+    "minAgo": "{{min}} min ago",
+    "hoursAgo": "{{h}}h ago",
+    "daysAgo": "{{d}}d ago",
+    "brain": {
+      "title": "Enterprise Brain",
+      "active": "Active and running",
+      "noAi": "No AI provider configured",
+      "error": "Last cycle failed — check configuration"
+    },
+    "contentGen": {
+      "title": "Content generation",
+      "available": "Available",
+      "degraded": "Degraded — service partially reachable",
+      "unavailable": "Unavailable — missing API key or service down"
+    },
+    "social": {
+      "title": "Social networks",
+      "connect": "Connect more networks →"
+    },
+    "autopilot": {
+      "title": "Last Autopilot cycle",
+      "ok": "Completed",
+      "failed": "Failed",
+      "unknown": "No data"
+    },
+    "credits": {
+      "title": "Available credits",
+      "topUp": "Top up credits →"
+    }
   }
 }

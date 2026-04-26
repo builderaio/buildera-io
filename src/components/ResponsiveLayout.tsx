@@ -315,14 +315,7 @@ const CompanyLayout = ({ profile, handleSignOut }: { profile: Profile; handleSig
           .maybeSingle();
           
         setOnboardingComplete(!!data?.onboarding_completed_at || !!data?.dna_empresarial_completed);
-        
-        const { data: company } = await supabase
-          .from('companies')
-          .select('id')
-          .eq('created_by', profile.user_id)
-          .maybeSingle();
-        
-        if (company?.id) setCompanyId(company.id);
+        // companyId is now derived from CompanyContext (handles users with multiple companies)
       } finally {
         checkOnboardingInFlight.current = false;
       }

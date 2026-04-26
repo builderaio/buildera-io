@@ -1,7 +1,7 @@
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import LanguageDetector from 'i18next-browser-languagedetector';
-import Backend from 'i18next-http-backend';
+import { resources } from './resources';
 
 const detectionOptions = {
   order: ['localStorage', 'navigator', 'htmlTag'],
@@ -10,10 +10,10 @@ const detectionOptions = {
 };
 
 i18n
-  .use(Backend)
   .use(LanguageDetector)
   .use(initReactI18next)
   .init({
+    resources,
     fallbackLng: 'es',
     supportedLngs: ['es', 'en', 'pt'],
     defaultNS: 'common',
@@ -31,16 +31,17 @@ i18n
       'validation',
       'notifications',
       'creatify',
+      'legal',
+      'pricing',
+      'governance',
     ],
     detection: detectionOptions,
-    backend: {
-      loadPath: '/locales/{{lng}}/{{ns}}.json',
-    },
+    initImmediate: false, // Synchronous init - prevents render before translations are ready
     interpolation: {
       escapeValue: false,
     },
     react: {
-      useSuspense: false, // Changed to false to avoid Suspense issues
+      useSuspense: false,
     },
   });
 

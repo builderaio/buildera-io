@@ -190,7 +190,7 @@ serve(async (req) => {
           }
         } catch (err) {
           console.error(`[execute-n8n-agent] Error processing mapping ${mapping.target_key}:`, err);
-          mappingErrors.push(`${mapping.target_key}: ${err.message}`);
+          mappingErrors.push(`${mapping.target_key}: ${(err as Error).message}`);
         }
       }
     }
@@ -229,7 +229,7 @@ serve(async (req) => {
 
     return new Response(JSON.stringify({
       success: false,
-      error: error.message || 'Unknown error',
+      error: (error as Error).message || 'Unknown error',
       execution_time_ms: executionTime,
     }), {
       status: 500,

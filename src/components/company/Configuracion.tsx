@@ -114,6 +114,10 @@ const Configuracion = ({ profile, resetTutorial }: ConfiguracionProps) => {
             <TabsContent value="notifications" className="mt-0">
               <NotificationPreferences />
             </TabsContent>
+
+            <TabsContent value="system" className="mt-0">
+              <SystemStatusPanel companyId={companyId} />
+            </TabsContent>
           </Tabs>
         </CardContent>
       </Card>

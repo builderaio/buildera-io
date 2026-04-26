@@ -12,6 +12,7 @@ import { InsightsManager } from "./insights/InsightsManager";
 import SimpleContentPublisher from "./SimpleContentPublisher";
 import { Lightbulb, Edit3, Sparkles, Loader2, Image as ImageIcon, Video } from "lucide-react";
 import { generateAIText, generateAIImage, saveInsight, saveGeneratedContent } from "@/utils/contentGeneration";
+import { parseAIServiceError, getAIErrorTranslationKey } from "@/utils/aiServiceErrors";
 import { SmartLoader } from "@/components/ui/smart-loader";
 import ContentImageSelector from "./ContentImageSelector";
 import { UnifiedLibrary } from "./UnifiedLibrary";

@@ -84,7 +84,7 @@ const DEPARTMENT_REGISTRY: Record<string, DepartmentConfig> = {
     systemPromptContext: 'sales pipeline, deal progression, lead qualification, revenue forecasting, proposal generation',
     senseQuery: async (companyId, { thirtyDaysAgo }) => {
       const [deals, contacts, activities] = await Promise.all([
-        supabase.from('crm_deals').select('id, title, value, stage, probability, expected_close_date, updated_at, created_at')
+        supabase.from('crm_deals').select('id, deal_name, amount, stage_id, status, probability, expected_close_date, updated_at, created_at')
           .eq('company_id', companyId).order('updated_at', { ascending: false }).limit(100),
         supabase.from('crm_contacts').select('id, lead_score, status, last_interaction_at, created_at')
           .eq('company_id', companyId).order('created_at', { ascending: false }).limit(100),
@@ -98,13 +98,13 @@ const DEPARTMENT_REGISTRY: Record<string, DepartmentConfig> = {
       });
       return {
         totalDeals: d.length,
-        pipelineValue: d.reduce((s, deal) => s + (deal.value || 0), 0),
+        pipelineValue: d.reduce((s, deal) => s + (deal.amount || 0), 0),
         stalledDeals: stalled.length,
-        avgDealValue: d.length ? d.reduce((s, deal) => s + (deal.value || 0), 0) / d.length : 0,
+        avgDealValue: d.length ? d.reduce((s, deal) => s + (deal.amount || 0), 0) / d.length : 0,
         contactsCount: contacts.data?.length || 0,
         recentActivities: activities.data?.length || 0,
         stageDistribution: d.reduce((acc: Record<string, number>, deal) => {
-          acc[deal.stage || 'unknown'] = (acc[deal.stage || 'unknown'] || 0) + 1;
+          acc[deal.stage_id || 'unknown'] = (acc[deal.stage_id || 'unknown'] || 0) + 1;
           return acc;
         }, {}),
       };
@@ -1417,7 +1417,7 @@ async function learnPhase(companyId: string, department: string, cycleId: string
         } else if (pe.decision_type === 'qualify_lead' || pe.decision_type === 'advance_deal') {
           // Check if deals advanced in pipeline after this decision
           const { data: advancedDeals } = await supabase.from('crm_deals')
-            .select('id, stage')
+            .select('id, stage_id')
             .eq('company_id', companyId)
             .gte('updated_at', pe.created_at)
             .limit(10);
@@ -1440,7 +1440,7 @@ async function learnPhase(companyId: string, department: string, cycleId: string
         } else if (['create_proposal', 'forecast_pipeline', 'enrich_contact'].includes(pe.decision_type)) {
           // Sales: check deal movement and contact enrichment
           const { data: dealUpdates } = await supabase.from('crm_deals')
-            .select('id, value').eq('company_id', companyId).gte('updated_at', pe.created_at).limit(10);
+            .select('id, amount').eq('company_id', companyId).gte('updated_at', pe.created_at).limit(10);
           const { data: contactUpdates } = await supabase.from('crm_contacts')
             .select('id').eq('company_id', companyId).gte('updated_at', pe.created_at).limit(10);
           const totalActivity = (dealUpdates?.length || 0) + (contactUpdates?.length || 0);

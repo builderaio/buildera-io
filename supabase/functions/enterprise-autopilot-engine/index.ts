@@ -16,7 +16,7 @@ const corsHeaders = {
 // ═══════════════════════════════════════════════════════════════
 
 const DEPT_CATEGORY_MAP: Record<string, string[]> = {
-  marketing: ['marketing', 'content', 'analytics', 'branding'],
+  marketing: ['marketing', 'content', 'analytics', 'branding', 'community'],
   sales: ['sales'],
   finance: ['finance'],
   legal: ['legal'],

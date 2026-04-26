@@ -214,7 +214,9 @@
       "reports": "Reports",
       "listening": "Social Listening",
       "attribution": "UTM Attribution",
-      "automation": "Automation Rules"
+      "automation": "Automation Rules",
+      "autodm": "AutoDM (IG)",
+      "events": "Live Events"
     },
     "metrics": {
       "insights": "Insights Generated",

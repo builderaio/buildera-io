@@ -88,12 +88,13 @@ serve(async (req) => {
 
     // 2. Get platform-specific page IDs
     const { data: socialAccounts } = await supabase.from('social_accounts')
-      .select('platform, facebook_page_id, linkedin_page_id')
+      .select('platform, facebook_page_id, linkedin_page_id, google_business_location_id')
       .eq('user_id', ownerUserId)
-      .in('platform', ['facebook', 'linkedin']);
+      .in('platform', ['facebook', 'linkedin', 'google_business']);
 
     const facebookAccount = socialAccounts?.find(a => a.platform === 'facebook');
     const linkedinAccount = socialAccounts?.find(a => a.platform === 'linkedin');
+    const gbpAccount = socialAccounts?.find(a => a.platform === 'google_business');
 
     // 3. Filter platforms by post type support
     const supportedPlatforms: Record<string, string[]> = {
@@ -150,6 +151,9 @@ serve(async (req) => {
         : linkedinAccount.linkedin_page_id;
       formData.append('target_linkedin_page_id', pageId);
     }
+    if (validPlatforms.includes('google_business') && gbpAccount?.google_business_location_id) {
+      formData.append('google_business_location_id', gbpAccount.google_business_location_id);
+    }
 
     // Forward any platform-specific params
     if (platform_params) {
@@ -172,7 +176,49 @@ serve(async (req) => {
       if (content?.trim()) formData.append('caption', content.trim());
       apiUrl = 'https://api.upload-post.com/api/upload_photos';
     } else if (postType === 'video' && mediaUrls?.length) {
-      formData.append('video', mediaUrls[0]);
+      // 4.1 Smart Cross-Posting: apply FFmpeg auto-resize rules per-platform when enabled
+      let videoToUpload = mediaUrls[0];
+      try {
+        const { data: rules } = await supabase
+          .from('social_autoresize_rules')
+          .select('platform, target_aspect_ratio, target_width, target_height, enabled')
+          .eq('company_id', company_id)
+          .eq('enabled', true);
+
+        if (rules && rules.length > 0 && validPlatforms.length > 1) {
+          // Pick the rule matching the FIRST platform that has a rule (Upload-Post takes one video per call)
+          const matched = rules.find(r => validPlatforms.includes(r.platform));
+          if (matched) {
+            console.log(`🎞️ Auto-resize requested for ${matched.platform} → ${matched.target_aspect_ratio} (${matched.target_width}x${matched.target_height})`);
+            const ffmpegResp = await fetch('https://api.upload-post.com/api/uploadposts/ffmpeg/jobs/upload', {
+              method: 'POST',
+              headers: { 'Authorization': AUTH_HEADER, 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                files: [videoToUpload],
+                full_command: `-vf "scale=${matched.target_width}:${matched.target_height}:force_original_aspect_ratio=decrease,pad=${matched.target_width}:${matched.target_height}:(ow-iw)/2:(oh-ih)/2:black" -c:a copy`,
+                output_extension: 'mp4',
+                async_processing: false,
+              }),
+            });
+            if (ffmpegResp.ok) {
+              const fj = await ffmpegResp.json();
+              const downloadUrl = fj?.download_url || fj?.url || fj?.output_url;
+              if (downloadUrl) {
+                videoToUpload = downloadUrl;
+                console.log(`✅ Auto-resize ready: ${downloadUrl}`);
+              } else {
+                console.warn('⚠️ Auto-resize completed but no download URL; using original');
+              }
+            } else {
+              console.warn(`⚠️ FFmpeg auto-resize failed (${ffmpegResp.status}); using original video`);
+            }
+          }
+        }
+      } catch (resizeErr) {
+        console.warn('⚠️ Auto-resize step skipped:', (resizeErr as Error).message);
+      }
+
+      formData.append('video', videoToUpload);
       apiUrl = 'https://api.upload-post.com/api/upload';
     } else {
       // Fallback to text if no media provided

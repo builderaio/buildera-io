@@ -213,7 +213,9 @@
       "reports": "Relatórios",
       "listening": "Escuta Social",
       "attribution": "Atribuição UTM",
-      "automation": "Regras de Automação"
+      "automation": "Regras de Automação",
+      "autodm": "AutoDM (IG)",
+      "events": "Eventos ao vivo"
     },
     "metrics": {
       "insights": "Insights Gerados",

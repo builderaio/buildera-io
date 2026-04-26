@@ -133,7 +133,14 @@ export default function ContentCreatorTab({ profile, topPosts, selectedPlatform,
       toast({ title: t('toast.content.generated'), description: t('toast.content.generatedDesc') });
     } catch (error) {
       console.error('Error generating content:', error);
-      toast({ title: t('errors:general.title'), description: t('toast.content.errorGenerate'), variant: "destructive" });
+      const parsed = await parseAIServiceError(error);
+      toast({
+        title: t('errors:general.title'),
+        description: t(getAIErrorTranslationKey(parsed.code), {
+          defaultValue: t('toast.content.errorGenerate'),
+        }),
+        variant: "destructive"
+      });
     } finally {
       setGeneratingContent(false);
     }

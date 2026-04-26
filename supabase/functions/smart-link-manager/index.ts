@@ -81,7 +81,7 @@ Deno.serve(async (req) => {
       if (insertError) throw insertError;
 
       // Increment leads count
-      await supabase.rpc("increment_smart_link_leads", { link_uuid: link.id }).catch(() => {
+      await Promise.resolve(supabase.rpc("increment_smart_link_leads", { link_uuid: link.id })).catch(() => {
         // Fallback: manual increment
         supabase
           .from("smart_links")
@@ -243,7 +243,7 @@ Deno.serve(async (req) => {
     });
   } catch (error) {
     console.error("smart-link-manager error:", error);
-    return new Response(JSON.stringify({ error: error.message }), {
+    return new Response(JSON.stringify({ error: (error as Error).message }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

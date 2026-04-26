@@ -84,7 +84,7 @@ const DEPARTMENT_REGISTRY: Record<string, DepartmentConfig> = {
     systemPromptContext: 'sales pipeline, deal progression, lead qualification, revenue forecasting, proposal generation',
     senseQuery: async (companyId, { thirtyDaysAgo }) => {
       const [deals, contacts, activities] = await Promise.all([
-        supabase.from('crm_deals').select('id, title, value, stage, probability, expected_close_date, updated_at, created_at')
+        supabase.from('crm_deals').select('id, deal_name, amount, stage_id, status, probability, expected_close_date, updated_at, created_at')
           .eq('company_id', companyId).order('updated_at', { ascending: false }).limit(100),
         supabase.from('crm_contacts').select('id, lead_score, status, last_interaction_at, created_at')
           .eq('company_id', companyId).order('created_at', { ascending: false }).limit(100),

@@ -9,6 +9,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { parseAIServiceError, getAIErrorTranslationKey } from "@/utils/aiServiceErrors";
 import { Share2, Upload, CheckCircle2, Clock, AlertCircle, Loader2, Edit3, Save, X, Calendar, Image, Sparkles, FileUp, Video, FileText, ChevronDown, ListPlus, MessageSquare, Globe } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";

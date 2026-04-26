@@ -88,12 +88,13 @@ serve(async (req) => {
 
     // 2. Get platform-specific page IDs
     const { data: socialAccounts } = await supabase.from('social_accounts')
-      .select('platform, facebook_page_id, linkedin_page_id')
+      .select('platform, facebook_page_id, linkedin_page_id, google_business_location_id')
       .eq('user_id', ownerUserId)
-      .in('platform', ['facebook', 'linkedin']);
+      .in('platform', ['facebook', 'linkedin', 'google_business']);
 
     const facebookAccount = socialAccounts?.find(a => a.platform === 'facebook');
     const linkedinAccount = socialAccounts?.find(a => a.platform === 'linkedin');
+    const gbpAccount = socialAccounts?.find(a => a.platform === 'google_business');
 
     // 3. Filter platforms by post type support
     const supportedPlatforms: Record<string, string[]> = {

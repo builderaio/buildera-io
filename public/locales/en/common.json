@@ -550,6 +550,18 @@
     "missionPlaceholder": "Define your company's core purpose...",
     "visionPlaceholder": "How do you see your company in the future?",
     "valuePropositionPlaceholder": "What unique value do you offer your customers?",
+    "corporateValues": "Corporate values",
+    "corporateValuesPlaceholder": "List the values that guide your company's decisions…",
+    "aiGenerate": {
+      "cta": "Generate with AI",
+      "generating": "Generating…",
+      "success": "Generated with AI",
+      "missingCompany": "Missing company information to generate",
+      "failed": "Could not generate content. Please try again.",
+      "unavailable": "AI generation is unavailable. Check the AI provider configuration or contact support.",
+      "quota": "AI quota exhausted. Top up your plan to continue.",
+      "rateLimited": "Too many requests. Please wait a moment and try again."
+    },
     "objectives": "Objectives",
     "noObjectives": "No objectives defined",
     "createManually": "Create manually",

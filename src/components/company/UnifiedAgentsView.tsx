@@ -20,6 +20,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useTranslation } from "react-i18next";
 import { usePlatformAgents, PlatformAgent } from "@/hooks/usePlatformAgents";
 import { useCompanyCredits } from "@/hooks/useCompanyCredits";
+import { useCompanyManagement } from "@/hooks/useCompanyManagement";
 import { AgentInteractionPanel } from "@/components/agents/AgentInteractionPanel";
 import { AgentIconRenderer } from "@/components/agents/AgentIconRenderer";
 import { cn } from "@/lib/utils";

@@ -285,9 +285,13 @@ export default function SimpleContentPublisher({
       }
     } catch (error) {
       console.error('Error generating content:', error);
+      const parsed = await parseAIServiceError(error);
+      const fallbackKey = 'publisher.errorGenerating';
       toast({
         title: t("errors:general.title"),
-        description: t('publisher.errorGenerating', 'No se pudo generar el contenido'),
+        description: t(getAIErrorTranslationKey(parsed.code), {
+          defaultValue: t(fallbackKey, 'No se pudo generar el contenido'),
+        }),
         variant: "destructive"
       });
     } finally {

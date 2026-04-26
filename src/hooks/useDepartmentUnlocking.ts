@@ -196,7 +196,10 @@ export const useDepartmentUnlocking = (
 
       const { data, error } = await supabase
         .from('company_department_config')
-        .insert(inserts)
+        .upsert(inserts, {
+          onConflict: 'company_id,department',
+          ignoreDuplicates: true,
+        })
         .select();
 
       if (error) throw error;

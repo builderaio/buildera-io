@@ -102,10 +102,13 @@ export default function UnifiedContentCreator({ profile, topPosts = [], selected
       });
     } catch (error) {
       console.error('Error generating content:', error);
-      toast({ 
-        title: t('toast.error'), 
-        description: t('toast.content.errorGenerate'), 
-        variant: "destructive" 
+      const parsed = await parseAIServiceError(error);
+      toast({
+        title: t('toast.error'),
+        description: t(getAIErrorTranslationKey(parsed.code), {
+          defaultValue: t('toast.content.errorGenerate'),
+        }),
+        variant: "destructive"
       });
     } finally {
       setIsGenerating(false);

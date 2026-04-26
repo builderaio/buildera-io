@@ -18,7 +18,7 @@ export interface Company {
   propuesta_valor?: string;
   mision?: string;
   vision?: string;
-  valores_corporativos?: string[];
+  
 }
 
 export interface CompanyMember {

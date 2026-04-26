@@ -56,7 +56,8 @@ const RISK_VARIANT: Record<
 
 const ApprovalCenter = () => {
   const { t, i18n } = useTranslation(["company", "common"]);
-  const { companyId } = useCompany();
+  const { company } = useCompany();
+  const companyId = company?.id;
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [decisions, setDecisions] = useState<AutopilotDecision[]>([]);

@@ -1364,7 +1364,8 @@ async function learnPhase(companyId: string, department: string, cycleId: string
   }));
 
   if (rows.length) {
-    await supabase.from('autopilot_decisions').insert(rows);
+    const { error: decErr } = await supabase.from('autopilot_decisions').insert(rows);
+    if (decErr) console.error(`❌ [${department}] autopilot_decisions INSERT FAILED:`, decErr);
   }
 
   // Store in memory for future reasoning with context_hash (GAP 2)
@@ -1380,7 +1381,8 @@ async function learnPhase(companyId: string, department: string, cycleId: string
   }));
 
   if (memoryRows.length) {
-    await supabase.from('autopilot_memory').insert(memoryRows);
+    const { error: memErr } = await supabase.from('autopilot_memory').insert(memoryRows);
+    if (memErr) console.error(`❌ [${department}] autopilot_memory INSERT FAILED:`, memErr);
   }
 
   // Evaluate past decisions (older than 7 days, still pending)

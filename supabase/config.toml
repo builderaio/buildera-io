@@ -1,5 +1,8 @@
 project_id = "ubhzzppmkhxbuiajfswa"
 
+[functions.upload-post-webhook]
+verify_jwt = false
+
 [functions.sandbox-agent-executor]
 verify_jwt = false
 

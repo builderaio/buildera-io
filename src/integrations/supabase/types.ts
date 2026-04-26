@@ -1091,6 +1091,137 @@ export type Database = {
         }
         Relationships: []
       }
+      autodm_monitor_logs: {
+        Row: {
+          comment_id: string | null
+          commenter_user_id: string | null
+          commenter_username: string | null
+          company_id: string
+          created_at: string
+          error_message: string | null
+          id: string
+          matched_keyword: string | null
+          message_sent: string | null
+          monitor_id: string
+          raw_payload: Json | null
+          status: string
+        }
+        Insert: {
+          comment_id?: string | null
+          commenter_user_id?: string | null
+          commenter_username?: string | null
+          company_id: string
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          matched_keyword?: string | null
+          message_sent?: string | null
+          monitor_id: string
+          raw_payload?: Json | null
+          status?: string
+        }
+        Update: {
+          comment_id?: string | null
+          commenter_user_id?: string | null
+          commenter_username?: string | null
+          company_id?: string
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          matched_keyword?: string | null
+          message_sent?: string | null
+          monitor_id?: string
+          raw_payload?: Json | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "autodm_monitor_logs_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "autodm_monitor_logs_monitor_id_fkey"
+            columns: ["monitor_id"]
+            isOneToOne: false
+            referencedRelation: "autodm_monitors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      autodm_monitors: {
+        Row: {
+          company_id: string
+          company_username: string
+          created_at: string
+          created_by: string
+          dms_sent_today: number
+          dms_sent_total: number
+          expires_at: string | null
+          id: string
+          last_check_at: string | null
+          last_dm_at: string | null
+          last_error: string | null
+          monitor_id: string | null
+          monitoring_interval: number
+          post_url: string
+          reply_message: string
+          status: string
+          trigger_keywords: string[] | null
+          updated_at: string
+        }
+        Insert: {
+          company_id: string
+          company_username: string
+          created_at?: string
+          created_by: string
+          dms_sent_today?: number
+          dms_sent_total?: number
+          expires_at?: string | null
+          id?: string
+          last_check_at?: string | null
+          last_dm_at?: string | null
+          last_error?: string | null
+          monitor_id?: string | null
+          monitoring_interval?: number
+          post_url: string
+          reply_message: string
+          status?: string
+          trigger_keywords?: string[] | null
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string
+          company_username?: string
+          created_at?: string
+          created_by?: string
+          dms_sent_today?: number
+          dms_sent_total?: number
+          expires_at?: string | null
+          id?: string
+          last_check_at?: string | null
+          last_dm_at?: string | null
+          last_error?: string | null
+          monitor_id?: string | null
+          monitoring_interval?: number
+          post_url?: string
+          reply_message?: string
+          status?: string
+          trigger_keywords?: string[] | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "autodm_monitors_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       automation_execution_log: {
         Row: {
           action_payload: Json | null
@@ -9497,6 +9628,50 @@ export type Database = {
           },
         ]
       }
+      social_autoresize_rules: {
+        Row: {
+          company_id: string
+          created_at: string
+          enabled: boolean
+          id: string
+          platform: string
+          target_aspect_ratio: string
+          target_height: number | null
+          target_width: number | null
+          updated_at: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          platform: string
+          target_aspect_ratio?: string
+          target_height?: number | null
+          target_width?: number | null
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          platform?: string
+          target_aspect_ratio?: string
+          target_height?: number | null
+          target_width?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "social_autoresize_rules_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       social_content_analysis: {
         Row: {
           analysis_period_end: string
@@ -10334,6 +10509,68 @@ export type Database = {
           video_count?: number | null
         }
         Relationships: []
+      }
+      upload_post_webhook_events: {
+        Row: {
+          account_name: string | null
+          company_id: string | null
+          event_type: string
+          id: string
+          job_id: string | null
+          payload: Json
+          platform: string | null
+          processed: boolean
+          processed_at: string | null
+          profile_username: string | null
+          reason: string | null
+          received_at: string
+          status: string | null
+          user_email: string | null
+          user_id: string | null
+        }
+        Insert: {
+          account_name?: string | null
+          company_id?: string | null
+          event_type: string
+          id?: string
+          job_id?: string | null
+          payload?: Json
+          platform?: string | null
+          processed?: boolean
+          processed_at?: string | null
+          profile_username?: string | null
+          reason?: string | null
+          received_at?: string
+          status?: string | null
+          user_email?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          account_name?: string | null
+          company_id?: string | null
+          event_type?: string
+          id?: string
+          job_id?: string | null
+          payload?: Json
+          platform?: string | null
+          processed?: boolean
+          processed_at?: string | null
+          profile_username?: string | null
+          reason?: string | null
+          received_at?: string
+          status?: string | null
+          user_email?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "upload_post_webhook_events_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_badges: {
         Row: {

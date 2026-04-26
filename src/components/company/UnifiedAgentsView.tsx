@@ -39,8 +39,8 @@ interface AgentUsageStats {
 
 const UnifiedAgentsView = ({ profile }: UnifiedAgentsViewProps) => {
   const { t } = useTranslation(['common', 'company']);
-  const [companyId, setCompanyId] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { primaryCompany, loading: companyLoading } = useCompanyManagement();
+  const companyId = primaryCompany?.id ?? null;
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [selectedAgent, setSelectedAgent] = useState<PlatformAgent | null>(null);
@@ -65,14 +65,6 @@ const UnifiedAgentsView = ({ profile }: UnifiedAgentsViewProps) => {
     const cats = new Set(agents.map(a => a.category).filter(Boolean));
     return ['all', ...Array.from(cats)];
   }, [agents]);
-
-  useEffect(() => {
-    if (profile?.user_id) {
-      loadCompanyData();
-    } else {
-      setLoading(false);
-    }
-  }, [profile?.user_id]);
 
   useEffect(() => {
     if (companyId) {

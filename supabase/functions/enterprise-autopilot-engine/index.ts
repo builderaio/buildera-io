@@ -1956,7 +1956,7 @@ IMPORTANT:
         console.log(`🚀 [${department}] Auto-activated trial (low risk, until ${trialExpiry}): ${cap.code}`);
       } else if (riskLevel === 'medium') {
         // Medium risk: submit for user review via content_approvals
-        await supabase.from('content_approvals').insert({
+        const { error: capMedErr } = await supabase.from('content_approvals').insert({
           company_id: companyId,
           content_type: 'capability_approval',
           content_id: cap.code,
@@ -1974,6 +1974,7 @@ IMPORTANT:
           submitted_by: 'capability_genesis_engine',
           notes: `[Capability Genesis] New ${riskLevel}-risk capability proposed: ${cap.name}. Requires user review before activation.`,
         });
+        if (capMedErr) console.error(`❌ content_approvals INSERT FAILED (capability medium, ${cap.code}):`, capMedErr);
         console.log(`📋 [${department}] Medium-risk capability sent for review: ${cap.code}`);
       } else if (riskLevel === 'high') {
         // High risk: explicit human approval required

@@ -111,19 +111,21 @@
   },
   "agent": "Agent",
   "dashboard": {
-    "mandoCentral": "Command Center",
-    "adn": "Business DNA",
-    "marketing": "Marketing Hub",
-    "intelligencia": "Competitive Intelligence",
-    "audiencias": "My Audiences",
-    "workforce": "My AI Workforce",
-    "agents": "My Agents",
-    "knowledge": "Knowledge Base",
-    "academy": "Buildera Academy",
-    "marketplace": "Marketplace",
-    "experts": "Experts",
-    "configuration": "Configuration",
-    "myProfile": "My Profile"
+    "vsPreviousMonth": "vs. previous month",
+    "progress": "Progress",
+    "autopilot": "Marketing Autopilot",
+    "cyclesCompleted": "cycles completed",
+    "last": "Last",
+    "autopilotCTA": "Activate to automate your marketing operations",
+    "activate": "Activate",
+    "strategicObjective": "Strategic Objective",
+    "objectiveProgress": "Objective Progress",
+    "noObjectives": "No objectives defined",
+    "defineObjectives": "Define Objectives",
+    "featuredRecommendation": "Featured Recommendation",
+    "healthScore": "Health Score",
+    "outOf100": "out of 100",
+    "viewDiagnostic": "View Full Diagnostic"
   },
   "mando": {
     "hello": "Hello, {{name}}!",
@@ -201,23 +203,6 @@
     "autopilotInactive": "Inactive",
     "enterpriseBrain": "Enterprise Brain",
     "approvals": "Approvals"
-  },
-  "dashboard": {
-    "vsPreviousMonth": "vs. previous month",
-    "progress": "Progress",
-    "autopilot": "Marketing Autopilot",
-    "cyclesCompleted": "cycles completed",
-    "last": "Last",
-    "autopilotCTA": "Activate to automate your marketing operations",
-    "activate": "Activate",
-    "strategicObjective": "Strategic Objective",
-    "objectiveProgress": "Objective Progress",
-    "noObjectives": "No objectives defined",
-    "defineObjectives": "Define Objectives",
-    "featuredRecommendation": "Featured Recommendation",
-    "healthScore": "Health Score",
-    "outOf100": "out of 100",
-    "viewDiagnostic": "View Full Diagnostic"
   },
   "onboarding": {
     "checkingData": "Checking your company data...",
@@ -388,7 +373,6 @@
   "credits": "credits",
   "execute": "Execute",
   "enable": "Enable",
-  "error": "Error",
   "missingData": "Missing required data",
   "insufficientCredits": "Insufficient credits",
   "needMoreCredits": "You need more credits to run this agent",
@@ -424,7 +408,19 @@
   "quickActions": "Quick Actions",
   "createContent": "Create Content",
   "companyDna": "Company DNA",
-  "intelligence": "Intelligence",
+  "intelligence": {
+    "title": "Intelligence",
+    "subtitle": "Diagnostics, competitive analysis and market reports",
+    "tabs": {
+      "diagnostic": "Diagnostic",
+      "competitors": "Competitors",
+      "market": "Market"
+    },
+    "market": {
+      "comingSoon": "Coming Soon",
+      "description": "Industry trend analysis, market opportunities and audience insights."
+    }
+  },
   "academy": "Academy",
   "discoverMoreAgents": "Discover more agents",
   "agentsAvailableToEnable": "agents available to enable",
@@ -697,19 +693,6 @@
           "marketingDesc": "Tracking responses and email campaign metrics"
         }
       }
-    }
-  },
-  "intelligence": {
-    "title": "Intelligence",
-    "subtitle": "Diagnostics, competitive analysis and market reports",
-    "tabs": {
-      "diagnostic": "Diagnostic",
-      "competitors": "Competitors",
-      "market": "Market"
-    },
-    "market": {
-      "comingSoon": "Coming Soon",
-      "description": "Industry trend analysis, market opportunities and audience insights."
     }
   },
   "nba": {
@@ -1631,9 +1614,24 @@
     "archetypeDesc_structured_firm": "Your digital presence supports business operations effectively. You compete on substance but could strengthen your authority signals to win against larger players.",
     "archetypeDesc_market_leader": "Your digital ecosystem positions you as a reference in your category. You compete on authority, evidence, and structured trust.",
     "toCompeteNext": "What You Need to Compete at the Next Level",
-    "archetypeUpgrade_micro_early": ["Establish verifiable case studies with measurable outcomes", "Create structured service pages with clear methodology", "Build a testimonial system with named clients and roles", "Implement basic SEO with targeted industry keywords"],
-    "archetypeUpgrade_boutique_specialized": ["Develop a portfolio of documented success stories with metrics", "Publish thought leadership content consistently", "Obtain third-party validations (certifications, awards, media mentions)", "Systematize your client acquisition beyond referrals"],
-    "archetypeUpgrade_structured_firm": ["Scale content production with authority-building assets", "Invest in competitive intelligence and market positioning", "Build automated trust signals (real-time metrics, client dashboards)", "Establish strategic partnerships and ecosystem presence"],
+    "archetypeUpgrade_micro_early": [
+      "Establish verifiable case studies with measurable outcomes",
+      "Create structured service pages with clear methodology",
+      "Build a testimonial system with named clients and roles",
+      "Implement basic SEO with targeted industry keywords"
+    ],
+    "archetypeUpgrade_boutique_specialized": [
+      "Develop a portfolio of documented success stories with metrics",
+      "Publish thought leadership content consistently",
+      "Obtain third-party validations (certifications, awards, media mentions)",
+      "Systematize your client acquisition beyond referrals"
+    ],
+    "archetypeUpgrade_structured_firm": [
+      "Scale content production with authority-building assets",
+      "Invest in competitive intelligence and market positioning",
+      "Build automated trust signals (real-time metrics, client dashboards)",
+      "Establish strategic partnerships and ecosystem presence"
+    ],
     "archetypeClosing_micro_early": "Currently competing on narrative. To compete on authority, you need structured evidence.",
     "archetypeClosing_boutique_specialized": "Currently competing on specialization. To compete on trust, you need verifiable proof at scale.",
     "archetypeClosing_structured_firm": "Currently competing on substance. To compete on category leadership, you need ecosystem dominance.",
@@ -1684,17 +1682,132 @@
       "developing": "Developing",
       "initial": "Initial"
     },
-    "bm": { "website": "Website configured", "socialChannels": "Active social channel", "multiChannel": "Multi-channel (3+)", "products": "Products registered", "strategy": "Value proposition defined", "branding": "Brand voice defined" },
-    "om": { "agentsConfigured": "Agents configured", "agentsActive": "3+ active agents", "agentsDiverse": "5+ diverse agents", "autopilotRuns": "Autopilot executed", "recurringExecs": "Recurring executions" },
-    "gov": { "capsActive": "Active capabilities", "guardrails": "Guardrails configured", "successRate": "3+ successful executions", "autopilotCycles": "5+ autopilot cycles", "humanReview": "Human review active" },
-    "wf": { "teamConfigured": "Team configured (2+)", "rolesAssigned": "Roles assigned", "ownerDefined": "Owner defined", "multipleRoles": "Multiple roles (3+)", "teamSize": "Large team (5+)" },
-    "td": { "socialIntegrations": "Active social integration", "multiPlatform": "Multi-platform (2+)", "dataProprietary": "Proprietary data loaded", "agentProtocols": "Agent-to-agent protocols", "fullStack": "Full stack (3+ channels + 3+ agents)" },
+    "bm": {
+      "website": "Website configured",
+      "socialChannels": "Active social channel",
+      "multiChannel": "Multi-channel (3+)",
+      "products": "Products registered",
+      "strategy": "Value proposition defined",
+      "branding": "Brand voice defined"
+    },
+    "om": {
+      "agentsConfigured": "Agents configured",
+      "agentsActive": "3+ active agents",
+      "agentsDiverse": "5+ diverse agents",
+      "autopilotRuns": "Autopilot executed",
+      "recurringExecs": "Recurring executions"
+    },
+    "gov": {
+      "capsActive": "Active capabilities",
+      "guardrails": "Guardrails configured",
+      "successRate": "3+ successful executions",
+      "autopilotCycles": "5+ autopilot cycles",
+      "humanReview": "Human review active"
+    },
+    "wf": {
+      "teamConfigured": "Team configured (2+)",
+      "rolesAssigned": "Roles assigned",
+      "ownerDefined": "Owner defined",
+      "multipleRoles": "Multiple roles (3+)",
+      "teamSize": "Large team (5+)"
+    },
+    "td": {
+      "socialIntegrations": "Active social integration",
+      "multiPlatform": "Multi-platform (2+)",
+      "dataProprietary": "Proprietary data loaded",
+      "agentProtocols": "Agent-to-agent protocols",
+      "fullStack": "Full stack (3+ channels + 3+ agents)"
+    },
     "rec": {
       "businessModel": "Connect digital channels and register your products to strengthen your agentic business model.",
       "operatingModel": "Activate more AI agents and set up recurring executions to automate your operations.",
       "governance": "Configure guardrails and activate autopilot capabilities for solid governance.",
       "workforce": "Expand your team and assign clear roles to prepare your organization for the agentic era.",
       "technologyData": "Connect more platforms and integrate proprietary data to maximize your tech capability."
+    }
+  },
+  "dnaSetup": {
+    "title": "Set up your Business DNA",
+    "subtitle": "Four quick steps so Autopilot can work for you",
+    "finishCta": "Finish and activate Autopilot",
+    "aiSuggestions": "Suggestions",
+    "step1": {
+      "title": "Tell us about your company",
+      "desc": "Confirm your business basics",
+      "long": "These details personalize the whole platform."
+    },
+    "step2": {
+      "title": "What is your biggest operational challenge?",
+      "desc": "Pick the challenge you most need to solve",
+      "long": "We will pick a first agent that tackles that challenge."
+    },
+    "step3": {
+      "title": "Define your mission in one sentence",
+      "desc": "Free text with AI suggestions",
+      "long": "Write it yourself or ask the AI for suggestions."
+    },
+    "step4": {
+      "title": "Your first agent is ready",
+      "desc": "Activate the AI-suggested agent for your challenge",
+      "long": "We selected an agent aligned with your main challenge.",
+      "needChallenge": "First complete step 2 (Main challenge).",
+      "thinking": "The AI is choosing your first agent..."
+    },
+    "fields": {
+      "name": "Company name",
+      "industry": "Industry",
+      "industryPh": "E.g. Tech, Retail, Health",
+      "country": "Country",
+      "size": "Size",
+      "sizePh": "Select a size",
+      "website": "Website",
+      "missionPh": "We exist to..."
+    },
+    "actions": {
+      "save": "Save",
+      "aiSuggest": "Suggest with AI",
+      "recommend": "Suggest agent with AI",
+      "activate": "Activate my first agent"
+    },
+    "challenges": {
+      "content": {
+        "label": "Generate consistent content",
+        "desc": "Posts, campaigns and auto-publishing"
+      },
+      "leads": {
+        "label": "Qualify leads",
+        "desc": "Scoring, pipeline and sales proposals"
+      },
+      "budget": {
+        "label": "Control budget",
+        "desc": "Cashflow, expenses and forecasting"
+      },
+      "compliance": {
+        "label": "Regulatory compliance",
+        "desc": "Review contracts and monitor obligations"
+      },
+      "talent": {
+        "label": "Talent management",
+        "desc": "Recruiting, profiles and workplace climate"
+      },
+      "process": {
+        "label": "Process efficiency",
+        "desc": "Task automation and SLAs"
+      }
+    },
+    "errors": {
+      "requiredFields": "Please fill the required fields",
+      "saveFailed": "Could not save",
+      "missionShort": "Write a valid mission",
+      "aiNoSuggestions": "No suggestions received",
+      "aiFailed": "AI generation unavailable",
+      "noAgent": "No matching agent found"
+    },
+    "toasts": {
+      "saved": "Data saved",
+      "challengeSaved": "Challenge saved",
+      "missionSaved": "Mission saved",
+      "completed": "Your Business DNA is set. Autopilot is now watching your company."
     }
   }
 }

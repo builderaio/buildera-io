@@ -1729,6 +1729,8 @@ export type Database = {
           deactivated_at: string | null
           deactivated_by: string | null
           description: string | null
+          dna_setup_completed: boolean
+          dna_setup_completed_at: string | null
           facebook_url: string | null
           id: string
           industry_sector: string | null
@@ -1739,7 +1741,10 @@ export type Database = {
           journey_type: string | null
           linkedin_url: string | null
           logo_url: string | null
+          mission: string | null
           name: string
+          primary_challenge: string | null
+          recommended_agent_code: string | null
           tiktok_url: string | null
           twitter_url: string | null
           updated_at: string
@@ -1756,6 +1761,8 @@ export type Database = {
           deactivated_at?: string | null
           deactivated_by?: string | null
           description?: string | null
+          dna_setup_completed?: boolean
+          dna_setup_completed_at?: string | null
           facebook_url?: string | null
           id?: string
           industry_sector?: string | null
@@ -1766,7 +1773,10 @@ export type Database = {
           journey_type?: string | null
           linkedin_url?: string | null
           logo_url?: string | null
+          mission?: string | null
           name: string
+          primary_challenge?: string | null
+          recommended_agent_code?: string | null
           tiktok_url?: string | null
           twitter_url?: string | null
           updated_at?: string
@@ -1783,6 +1793,8 @@ export type Database = {
           deactivated_at?: string | null
           deactivated_by?: string | null
           description?: string | null
+          dna_setup_completed?: boolean
+          dna_setup_completed_at?: string | null
           facebook_url?: string | null
           id?: string
           industry_sector?: string | null
@@ -1793,7 +1805,10 @@ export type Database = {
           journey_type?: string | null
           linkedin_url?: string | null
           logo_url?: string | null
+          mission?: string | null
           name?: string
+          primary_challenge?: string | null
+          recommended_agent_code?: string | null
           tiktok_url?: string | null
           twitter_url?: string | null
           updated_at?: string

@@ -19,6 +19,7 @@ import { useBusinessHealth, BusinessHealthKPI, ObjectiveProgress } from "@/hooks
 import { useDepartmentUnlocking } from "@/hooks/useDepartmentUnlocking";
 import { AgentInteractionPanel } from "@/components/agents/AgentInteractionPanel";
 import { EnterpriseAutopilotWelcome } from "@/components/company/EnterpriseAutopilotWelcome";
+import { DnaSetupChecklist } from "@/components/company/DnaSetupChecklist";
 import { useCompany } from "@/contexts/CompanyContext";
 import { cn } from "@/lib/utils";
 
@@ -466,7 +467,12 @@ const BusinessHealthDashboard = ({ profile, onNavigate }: BusinessHealthDashboar
           </p>
         </div>
 
-        {/* Hero activation card */}
+        {/* DNA Setup checklist (post-onboarding) */}
+        {!(company as any)?.dna_setup_completed && (
+          <DnaSetupChecklist onNavigate={(view) => handleNavigate(view)} />
+        )}
+
+
         <Card className="border-primary/30 bg-gradient-to-br from-primary/10 via-secondary/5 to-transparent overflow-hidden">
           <CardContent className="p-6 sm:p-8">
             <div className="flex items-start gap-4">
@@ -576,6 +582,11 @@ const BusinessHealthDashboard = ({ profile, onNavigate }: BusinessHealthDashboar
           </Badge>
         </div>
       </div>
+
+      {/* DNA Setup checklist (post-onboarding) */}
+      {!(company as any)?.dna_setup_completed && (
+        <DnaSetupChecklist onNavigate={(view) => handleNavigate(view)} />
+      )}
 
       {/* Enterprise Autopilot Status Card */}
       {companyId && (

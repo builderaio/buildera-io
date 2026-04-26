@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useTranslation } from "react-i18next";
 import { EraOptimizerButton } from "@/components/ui/era-optimizer-button";
+import { AIGenerateFieldButton } from "@/components/ui/ai-generate-field-button";
 import { Target, TrendingUp, RefreshCw, Sparkles, Plus, Trash2, Calendar } from "lucide-react";
 import { AutoSaveField } from "./shared/AutoSaveField";
 

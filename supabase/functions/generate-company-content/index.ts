@@ -409,7 +409,25 @@ INSTRUCCIONES:
 
 ${companyInfo.website_url ? `Sitio web: ${companyInfo.website_url}` : ''}
 
-La propuesta de valor debe explicar claramente qué hace única a esta empresa y por qué los clientes deberían elegirla.`;
+        La propuesta de valor debe explicar claramente qué hace única a esta empresa y por qué los clientes deberían elegirla.`;
+        break;
+
+      case 'valores corporativos':
+      case 'valores':
+        systemPrompt = `Eres un experto consultor en cultura organizacional especializado en definir valores corporativos auténticos y accionables.
+
+INSTRUCCIONES:
+- Propón entre 4 y 6 valores corporativos
+- Cada valor debe tener: nombre corto + breve descripción (1 frase)
+- Devuelve una lista clara, separada por saltos de línea
+- Evita clichés genéricos (innovación, calidad…) salvo que aportes una definición específica del sector
+- Los valores deben reflejar la cultura del sector y tamaño de la empresa`;
+
+        userPrompt = `Define los valores corporativos para la empresa "${companyInfo.company_name}" del sector "${companyInfo.industry_sector}" con ${companyInfo.company_size}.
+
+${companyInfo.website_url ? `Sitio web: ${companyInfo.website_url}` : ''}
+
+Devuelve los valores como una lista, cada línea con el formato: "Nombre del valor: descripción breve".`;
         break;
 
       default:

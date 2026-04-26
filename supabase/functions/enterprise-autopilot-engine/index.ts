@@ -1978,7 +1978,7 @@ IMPORTANT:
         console.log(`📋 [${department}] Medium-risk capability sent for review: ${cap.code}`);
       } else if (riskLevel === 'high') {
         // High risk: explicit human approval required
-        await supabase.from('content_approvals').insert({
+        const { error: capHiErr } = await supabase.from('content_approvals').insert({
           company_id: companyId,
           content_type: 'capability_approval',
           content_id: cap.code,
@@ -1997,6 +1997,7 @@ IMPORTANT:
           submitted_by: 'capability_genesis_engine',
           notes: `[⚠️ HIGH RISK] [Capability Genesis] New high-risk capability: ${cap.name}. REQUIRES EXPLICIT HUMAN APPROVAL before any activation.`,
         });
+        if (capHiErr) console.error(`❌ content_approvals INSERT FAILED (capability high, ${cap.code}):`, capHiErr);
         console.log(`🔒 [${department}] High-risk capability requires human approval: ${cap.code}`);
       }
     }

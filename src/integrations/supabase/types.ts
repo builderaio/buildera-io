@@ -3861,6 +3861,7 @@ export type Database = {
           mision: string | null
           propuesta_valor: string | null
           updated_at: string
+          valores_corporativos: string | null
           vision: string | null
         }
         Insert: {
@@ -3871,6 +3872,7 @@ export type Database = {
           mision?: string | null
           propuesta_valor?: string | null
           updated_at?: string
+          valores_corporativos?: string | null
           vision?: string | null
         }
         Update: {
@@ -3881,6 +3883,7 @@ export type Database = {
           mision?: string | null
           propuesta_valor?: string | null
           updated_at?: string
+          valores_corporativos?: string | null
           vision?: string | null
         }
         Relationships: [

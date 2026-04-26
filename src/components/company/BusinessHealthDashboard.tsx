@@ -157,70 +157,139 @@ const ActivityItem = ({ activity }: { activity: ActivityLog }) => {
   );
 };
 
-// Enterprise Autopilot Status Card
+// Enterprise Autopilot Status Card — honest status based on actual cycle activity
 const EnterpriseAutopilotStatusCard = ({ companyId, departments, onNavigate }: { companyId: string; departments: any[]; onNavigate: (view: string) => void }) => {
   const { t } = useTranslation(['common']);
   const [lastExecution, setLastExecution] = useState<any>(null);
+  const [decisionsThisCycle, setDecisionsThisCycle] = useState<number>(0);
+  const [recentError, setRecentError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
-      const { data } = await supabase
+      // Last successful cycle
+      const { data: lastOk } = await supabase
         .from('autopilot_execution_log')
-        .select('status, phase, credits_consumed, created_at')
+        .select('status, phase, credits_consumed, created_at, cycle_id, error_message')
         .eq('company_id', companyId)
         .order('created_at', { ascending: false })
         .limit(1)
         .maybeSingle();
-      setLastExecution(data);
+      setLastExecution(lastOk);
+
+      // Decisions made in the most recent cycle (any decision row)
+      if (lastOk?.cycle_id) {
+        const { count } = await supabase
+          .from('autopilot_decisions')
+          .select('id', { count: 'exact', head: true })
+          .eq('company_id', companyId)
+          .eq('cycle_id', lastOk.cycle_id);
+        setDecisionsThisCycle(count || 0);
+      } else {
+        setDecisionsThisCycle(0);
+      }
+
+      // Detect configuration / credentials issues from recent failures (last 24h)
+      const since = new Date(Date.now() - 24 * 3600 * 1000).toISOString();
+      const { data: errs } = await supabase
+        .from('autopilot_decisions')
+        .select('reasoning, created_at')
+        .eq('company_id', companyId)
+        .eq('decision_type', 'cycle_error')
+        .gte('created_at', since)
+        .order('created_at', { ascending: false })
+        .limit(1);
+      const reason = errs?.[0]?.reasoning || '';
+      if (/quota|insufficient_quota|api[_ ]?key|unauthorized|401|403|missing.*key|openai/i.test(reason)) {
+        setRecentError(reason);
+      } else {
+        setRecentError(null);
+      }
     };
     fetchData();
   }, [companyId]);
 
   const activeDepts = departments.filter(d => d.autopilot_enabled).length;
   const totalDepts = departments.length;
-  const hasActive = activeDepts > 0;
+  const enabled = activeDepts > 0;
+  const needsConfig = !!recentError;
+  // Honest "active" = enabled AND last cycle is recent AND not failed AND no config issue
+  const lastTs = lastExecution?.created_at ? new Date(lastExecution.created_at).getTime() : null;
+  const minutesSinceLast = lastTs ? Math.round((Date.now() - lastTs) / 60000) : null;
+  const lastFailed = lastExecution?.status === 'failed';
+  const isHealthy = enabled && !needsConfig && !lastFailed && lastTs !== null && minutesSinceLast! < 1440; // <24h
+  const stateLabel = needsConfig
+    ? t('common:enterprise.autopilot.config_required', 'Configuración requerida')
+    : !enabled
+      ? t('common:enterprise.autopilot_inactive', 'Inactivo')
+      : isHealthy
+        ? t('common:enterprise.autopilot_active', 'Activo')
+        : t('common:enterprise.autopilot.idle', 'En espera');
+
+  const stateColor = needsConfig
+    ? 'border-amber-500/30 bg-gradient-to-br from-amber-500/5 to-transparent'
+    : isHealthy
+      ? 'border-emerald-500/30 bg-gradient-to-br from-emerald-500/5 to-transparent'
+      : 'border-primary/30 bg-gradient-to-br from-primary/5 to-transparent';
+
+  const iconBg = needsConfig ? 'bg-amber-500/10' : isHealthy ? 'bg-emerald-500/10' : 'bg-primary/10';
+  const iconColor = needsConfig ? 'text-amber-500' : isHealthy ? 'text-emerald-500' : 'text-primary';
+
+  const formatLastCycle = () => {
+    if (minutesSinceLast === null) return t('common:enterprise.autopilot.never_run', 'Nunca ejecutado');
+    if (minutesSinceLast < 1) return t('common:enterprise.autopilot.last_cycle_now', 'Último ciclo: ahora');
+    if (minutesSinceLast < 60) return t('common:enterprise.autopilot.last_cycle_min', 'Último ciclo: hace {{min}}min', { min: minutesSinceLast });
+    const hours = Math.round(minutesSinceLast / 60);
+    if (hours < 24) return t('common:enterprise.autopilot.last_cycle_hours', 'Último ciclo: hace {{h}}h', { h: hours });
+    const days = Math.round(hours / 24);
+    return t('common:enterprise.autopilot.last_cycle_days', 'Último ciclo: hace {{d}}d', { d: days });
+  };
 
   return (
-    <Card className={cn(
-      "border overflow-hidden",
-      hasActive ? "border-emerald-500/30 bg-gradient-to-br from-emerald-500/5 to-transparent" : "border-primary/30 bg-gradient-to-br from-primary/5 to-transparent"
-    )}>
+    <Card className={cn("border overflow-hidden", stateColor)}>
       <CardContent className="p-4 sm:p-5">
         <div className="flex items-start gap-3">
-          <div className={cn(
-            "p-2.5 rounded-xl",
-            hasActive ? "bg-emerald-500/10" : "bg-primary/10"
-          )}>
-            <Brain className={cn("w-5 h-5", hasActive ? "text-emerald-500" : "text-primary")} />
+          <div className={cn("p-2.5 rounded-xl", iconBg)}>
+            <Brain className={cn("w-5 h-5", iconColor)} />
           </div>
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-1">
+            <div className="flex items-center gap-2 mb-1 flex-wrap">
               <h3 className="font-semibold text-sm">{t('common:enterprise.autopilot.title')}</h3>
-              <Badge variant={hasActive ? "default" : "secondary"} className={cn(
-                "text-[10px]",
-                hasActive ? "bg-emerald-500/20 text-emerald-600 border-emerald-500/30" : ""
-              )}>
-                {activeDepts}/{totalDepts} {t('common:enterprise.departments.marketing') ? '' : ''}
+              <Badge
+                variant={isHealthy ? 'default' : 'secondary'}
+                className={cn(
+                  'text-[10px]',
+                  needsConfig && 'bg-amber-500/20 text-amber-600 border-amber-500/30',
+                  isHealthy && 'bg-emerald-500/20 text-emerald-600 border-emerald-500/30'
+                )}
+              >
+                {stateLabel}
               </Badge>
+              <span className="text-[10px] text-muted-foreground">{activeDepts}/{totalDepts}</span>
             </div>
             <p className="text-xs text-muted-foreground">
-              {hasActive 
-                ? `${activeDepts} ${t('common:enterprise.departments.marketing', 'dept').replace(/Marketing/i, t('common:enterprise.autopilot.actions_short', 'departments'))} ${t('common:enterprise.autopilot_active', 'active')}`
-                : t('common:enterprise.autopilot.subtitle')}
+              {formatLastCycle()}
             </p>
-            {lastExecution && (
-              <p className="text-[10px] text-muted-foreground mt-1">
-                {t('common:dashboard.last', 'Last')}: {lastExecution.status} • {lastExecution.credits_consumed} cr
+            <p className="text-[10px] text-muted-foreground mt-0.5">
+              {t('common:enterprise.autopilot.decisions_this_cycle', 'Decisiones este ciclo')}: {decisionsThisCycle}
+              {lastExecution?.credits_consumed != null && ` • ${lastExecution.credits_consumed} cr`}
+            </p>
+            {needsConfig && (
+              <p className="text-[10px] text-amber-600 mt-1 line-clamp-2">
+                {t('common:enterprise.autopilot.config_hint', 'Faltan credenciales o cuota de IA. Revisa la configuración del proveedor.')}
               </p>
             )}
           </div>
-          <Button 
-            size="sm" 
-            variant={hasActive ? "outline" : "default"}
+          <Button
+            size="sm"
+            variant={isHealthy ? 'outline' : 'default'}
             onClick={() => onNavigate('autopilot')}
             className="shrink-0"
           >
-            {hasActive ? t('common:actions.view') : t('common:dashboard.activate', 'Activate')}
+            {needsConfig
+              ? t('common:enterprise.autopilot.fix', 'Configurar')
+              : enabled
+                ? t('common:actions.view')
+                : t('common:dashboard.activate', 'Activate')}
             <ArrowRight className="w-3 h-3 ml-1" />
           </Button>
         </div>

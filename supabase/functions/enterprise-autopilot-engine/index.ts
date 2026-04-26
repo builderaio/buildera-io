@@ -2436,6 +2436,21 @@ async function runDepartmentCycle(companyId: string, department: string, deptCon
     if (failLogError) {
       console.error(`❌ [${department}] autopilot_execution_log FAILURE INSERT FAILED:`, failLogError);
     }
+    // Persist a visible decision row so autopilot_decisions reflects cycle-level failures (e.g., OpenAI 429)
+    const { error: failDecErr } = await supabase.from('autopilot_decisions').insert({
+      company_id: companyId,
+      cycle_id: cycleId,
+      decision_type: 'cycle_error',
+      priority: 'high',
+      description: `Autopilot cycle failed in ${department}`,
+      reasoning: (error as Error).message,
+      action_taken: false,
+      guardrail_result: 'blocked',
+      expected_impact: { error: true, department, phase: 'runtime' },
+    });
+    if (failDecErr) {
+      console.error(`❌ [${department}] autopilot_decisions FAILURE INSERT FAILED:`, failDecErr);
+    }
     return { department, cycle_id: cycleId, success: false, error: (error as Error).message };
   }
 }

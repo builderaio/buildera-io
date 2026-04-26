@@ -257,7 +257,7 @@ async function gatherExternalIntelligence(companyId: string, maturityLevel: stri
       const aiResult = await aiRes.json();
       if (aiResult.success) {
         const parsed = tryParseJson(aiResult.response);
-        await supabase.from('external_intelligence_cache').insert({
+        const { error: extErr } = await supabase.from('external_intelligence_cache').insert({
           company_id: companyId,
           source: q.source as any,
           region: company.country,
@@ -268,7 +268,10 @@ async function gatherExternalIntelligence(companyId: string, maturityLevel: stri
           relevance_score: 0.7,
           expires_at: new Date(Date.now() + 24 * 3600000).toISOString(),
         });
+        if (extErr) console.error(`❌ external_intelligence_cache INSERT FAILED (source=${q.source}):`, extErr);
         results.push({ source: q.source, signals: parsed || [] });
+      } else {
+        console.warn(`⚠️ External intelligence AI call failed for ${q.source}: ${aiResult.error || 'unknown'}`);
       }
     } catch (e) {
       console.error(`External intelligence fetch failed for ${q.source}:`, e);

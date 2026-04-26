@@ -62,7 +62,7 @@
   },
   "generateWithAI": "Generar con IA",
   "generating": "Generando...",
-  "add": "Agregar",
+  "add": "Añadir",
   "or": "o",
   "error": "Error",
   "tabs": {
@@ -111,19 +111,21 @@
   },
   "agent": "Agente",
   "dashboard": {
-    "mandoCentral": "Mando Central",
-    "adn": "ADN del Negocio",
-    "marketing": "Marketing Hub",
-    "intelligencia": "Inteligencia Competitiva",
-    "audiencias": "Mis Audiencias",
-    "workforce": "Mi Workforce IA",
-    "agents": "Mis Agentes",
-    "knowledge": "Base de Conocimiento",
-    "academy": "Academia Buildera",
-    "marketplace": "Marketplace",
-    "experts": "Expertos",
-    "configuration": "Configuración",
-    "myProfile": "Mi Perfil"
+    "vsPreviousMonth": "vs. mes anterior",
+    "progress": "Progreso",
+    "autopilot": "Marketing Autopilot",
+    "cyclesCompleted": "ciclos completados",
+    "last": "Último",
+    "autopilotCTA": "Activa para automatizar tus operaciones de marketing",
+    "activate": "Activar",
+    "strategicObjective": "Objetivo Estratégico",
+    "objectiveProgress": "Progreso de Objetivos",
+    "noObjectives": "No tienes objetivos definidos",
+    "defineObjectives": "Definir Objetivos",
+    "featuredRecommendation": "Recomendación destacada",
+    "healthScore": "Puntuación de Salud",
+    "outOf100": "de 100 puntos",
+    "viewDiagnostic": "Ver Diagnóstico Completo"
   },
   "mando": {
     "hello": "¡Hola, {{name}}!",
@@ -201,23 +203,6 @@
     "autopilotInactive": "Inactivo",
     "enterpriseBrain": "Cerebro Empresarial",
     "approvals": "Aprobaciones"
-  },
-  "dashboard": {
-    "vsPreviousMonth": "vs. mes anterior",
-    "progress": "Progreso",
-    "autopilot": "Marketing Autopilot",
-    "cyclesCompleted": "ciclos completados",
-    "last": "Último",
-    "autopilotCTA": "Activa para automatizar tus operaciones de marketing",
-    "activate": "Activar",
-    "strategicObjective": "Objetivo Estratégico",
-    "objectiveProgress": "Progreso de Objetivos",
-    "noObjectives": "No tienes objetivos definidos",
-    "defineObjectives": "Definir Objetivos",
-    "featuredRecommendation": "Recomendación destacada",
-    "healthScore": "Puntuación de Salud",
-    "outOf100": "de 100 puntos",
-    "viewDiagnostic": "Ver Diagnóstico Completo"
   },
   "onboarding": {
     "checkingData": "Verificando datos de tu empresa...",
@@ -388,7 +373,6 @@
   "credits": "créditos",
   "execute": "Ejecutar",
   "enable": "Habilitar",
-  "error": "Error",
   "missingData": "Faltan datos necesarios",
   "insufficientCredits": "Créditos insuficientes",
   "needMoreCredits": "Necesitas más créditos para ejecutar este agente",
@@ -424,7 +408,19 @@
   "quickActions": "Acciones Rápidas",
   "createContent": "Crear Contenido",
   "companyDna": "ADN Empresa",
-  "intelligence": "Inteligencia",
+  "intelligence": {
+    "title": "Inteligencia",
+    "subtitle": "Diagnósticos, análisis de competencia y reportes de mercado",
+    "tabs": {
+      "diagnostic": "Diagnóstico",
+      "competitors": "Competidores",
+      "market": "Mercado"
+    },
+    "market": {
+      "comingSoon": "Próximamente",
+      "description": "Análisis de tendencias del sector, oportunidades de mercado e insights de audiencia."
+    }
+  },
   "academy": "Academia",
   "discoverMoreAgents": "Descubre más agentes",
   "agentsAvailableToEnable": "agentes disponibles para habilitar",
@@ -693,19 +689,6 @@
           "marketingDesc": "Seguimiento de respuestas y métricas de campañas de email"
         }
       }
-    }
-  },
-  "intelligence": {
-    "title": "Inteligencia",
-    "subtitle": "Diagnósticos, análisis de competencia y reportes de mercado",
-    "tabs": {
-      "diagnostic": "Diagnóstico",
-      "competitors": "Competidores",
-      "market": "Mercado"
-    },
-    "market": {
-      "comingSoon": "Próximamente",
-      "description": "Análisis de tendencias del sector, oportunidades de mercado e insights de audiencia."
     }
   },
   "nba": {
@@ -1230,7 +1213,6 @@
   "previous": "Anterior",
   "next": "Siguiente",
   "finish": "Finalizar",
-  "add": "Añadir",
   "enterprise": {
     "department_unlocked": "Departamento desbloqueado: {{department}}",
     "department_unlocked_desc": "Se ha desbloqueado una nueva capacidad empresarial automáticamente gracias al crecimiento de tu negocio.",
@@ -1685,9 +1667,24 @@
     "archetypeDesc_structured_firm": "Tu presencia digital soporta las operaciones comerciales de manera efectiva. Compites con sustancia pero podrías fortalecer tus señales de autoridad para ganar contra jugadores más grandes.",
     "archetypeDesc_market_leader": "Tu ecosistema digital te posiciona como referente en tu categoría. Compites con autoridad, evidencia y confianza estructurada.",
     "toCompeteNext": "Qué Necesitas para Competir en el Siguiente Nivel",
-    "archetypeUpgrade_micro_early": ["Establecer casos de éxito verificables con resultados medibles", "Crear páginas de servicios estructuradas con metodología clara", "Construir un sistema de testimonios con clientes identificados y roles", "Implementar SEO básico con palabras clave del sector"],
-    "archetypeUpgrade_boutique_specialized": ["Desarrollar un portafolio de historias de éxito documentadas con métricas", "Publicar contenido de liderazgo de pensamiento de forma consistente", "Obtener validaciones de terceros (certificaciones, premios, menciones en medios)", "Sistematizar la adquisición de clientes más allá de las referencias"],
-    "archetypeUpgrade_structured_firm": ["Escalar la producción de contenido con activos de construcción de autoridad", "Invertir en inteligencia competitiva y posicionamiento de mercado", "Construir señales de confianza automatizadas (métricas en tiempo real, dashboards de clientes)", "Establecer alianzas estratégicas y presencia en el ecosistema"],
+    "archetypeUpgrade_micro_early": [
+      "Establecer casos de éxito verificables con resultados medibles",
+      "Crear páginas de servicios estructuradas con metodología clara",
+      "Construir un sistema de testimonios con clientes identificados y roles",
+      "Implementar SEO básico con palabras clave del sector"
+    ],
+    "archetypeUpgrade_boutique_specialized": [
+      "Desarrollar un portafolio de historias de éxito documentadas con métricas",
+      "Publicar contenido de liderazgo de pensamiento de forma consistente",
+      "Obtener validaciones de terceros (certificaciones, premios, menciones en medios)",
+      "Sistematizar la adquisición de clientes más allá de las referencias"
+    ],
+    "archetypeUpgrade_structured_firm": [
+      "Escalar la producción de contenido con activos de construcción de autoridad",
+      "Invertir en inteligencia competitiva y posicionamiento de mercado",
+      "Construir señales de confianza automatizadas (métricas en tiempo real, dashboards de clientes)",
+      "Establecer alianzas estratégicas y presencia en el ecosistema"
+    ],
     "archetypeClosing_micro_early": "Actualmente compite por narrativa. Para competir por autoridad necesita evidencia estructurada.",
     "archetypeClosing_boutique_specialized": "Actualmente compite por especialización. Para competir por confianza necesita pruebas verificables a escala.",
     "archetypeClosing_structured_firm": "Actualmente compite por sustancia. Para competir por liderazgo de categoría necesita dominio del ecosistema.",
@@ -1780,6 +1777,90 @@
       "governance": "Configura guardrails y activa capacidades del autopilot para establecer gobernanza sólida.",
       "workforce": "Amplía tu equipo y asigna roles claros para preparar tu organización para la era agéntica.",
       "technologyData": "Conecta más plataformas e integra datos propietarios para maximizar tu capacidad tecnológica."
+    }
+  },
+  "dnaSetup": {
+    "title": "Configura tu ADN Empresarial",
+    "subtitle": "Cuatro pasos rápidos para que el Autopilot trabaje por ti",
+    "finishCta": "Finalizar y activar Autopilot",
+    "aiSuggestions": "Sugerencias",
+    "step1": {
+      "title": "Cuéntanos sobre tu empresa",
+      "desc": "Confirma los datos básicos del negocio",
+      "long": "Estos datos personalizan toda la plataforma."
+    },
+    "step2": {
+      "title": "¿Cuál es tu mayor reto operativo?",
+      "desc": "Elige el reto que más te urge resolver",
+      "long": "Elegiremos un primer agente que ataque ese reto."
+    },
+    "step3": {
+      "title": "Define tu misión en una frase",
+      "desc": "Texto libre con sugerencias de IA",
+      "long": "Escríbela tú o pide sugerencias a la IA."
+    },
+    "step4": {
+      "title": "Tu primer agente está listo",
+      "desc": "Activa el agente sugerido por IA según tu reto",
+      "long": "Seleccionamos un agente alineado con tu reto principal.",
+      "needChallenge": "Primero completa el paso 2 (Reto principal).",
+      "thinking": "La IA está eligiendo tu primer agente..."
+    },
+    "fields": {
+      "name": "Nombre de la empresa",
+      "industry": "Sector",
+      "industryPh": "Ej. Tecnología, Retail, Salud",
+      "country": "País",
+      "size": "Tamaño",
+      "sizePh": "Selecciona un tamaño",
+      "website": "Sitio web",
+      "missionPh": "Existimos para..."
+    },
+    "actions": {
+      "save": "Guardar",
+      "aiSuggest": "Sugerir con IA",
+      "recommend": "Sugerir agente con IA",
+      "activate": "Activar mi primer agente"
+    },
+    "challenges": {
+      "content": {
+        "label": "Generar contenido consistente",
+        "desc": "Posts, campañas y publicación automática"
+      },
+      "leads": {
+        "label": "Calificar leads",
+        "desc": "Scoring, pipeline y propuestas de venta"
+      },
+      "budget": {
+        "label": "Controlar presupuesto",
+        "desc": "Cashflow, gastos y proyecciones"
+      },
+      "compliance": {
+        "label": "Cumplimiento regulatorio",
+        "desc": "Revisar contratos y monitorear obligaciones"
+      },
+      "talent": {
+        "label": "Gestión de talento",
+        "desc": "Reclutamiento, perfiles y clima laboral"
+      },
+      "process": {
+        "label": "Eficiencia de procesos",
+        "desc": "Automatización de tareas y SLAs"
+      }
+    },
+    "errors": {
+      "requiredFields": "Completa los campos requeridos",
+      "saveFailed": "No se pudo guardar",
+      "missionShort": "Escribe una misión válida",
+      "aiNoSuggestions": "No se obtuvieron sugerencias",
+      "aiFailed": "Generación con IA no disponible",
+      "noAgent": "No se encontró un agente compatible"
+    },
+    "toasts": {
+      "saved": "Datos guardados",
+      "challengeSaved": "Reto guardado",
+      "missionSaved": "Misión guardada",
+      "completed": "Tu ADN Empresarial está configurado. El Autopilot observa tu empresa."
     }
   }
 }

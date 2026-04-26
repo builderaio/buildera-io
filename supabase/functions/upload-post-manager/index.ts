@@ -1969,3 +1969,200 @@ async function deleteUserProfile(supabaseClient: any, userId: string, apiKey: st
 
   return { success: true, deleted: companyUsername };
 }
+
+// =====================================================================
+// AutoDM Monitors (Instagram lead capture 24/7)
+// =====================================================================
+const UP_MONITORS_BASE = 'https://api.upload-post.com/api/uploadposts/monitors';
+const UP_MONITORS_BASE_ALT = 'https://app.upload-post.com/api/uploadposts/monitors';
+
+async function callMonitorEndpoint(path: string, method: string, apiKey: string, body?: any) {
+  // Try canonical api host first; fallback to app host (per docs both surfaces appear)
+  const headers: Record<string, string> = {
+    'Authorization': AUTH_HEADER(apiKey),
+    'Content-Type': 'application/json',
+  };
+  const init: RequestInit = { method, headers, ...(body ? { body: JSON.stringify(body) } : {}) };
+  const urls = [`${UP_MONITORS_BASE}${path}`, `${UP_MONITORS_BASE_ALT}${path}`];
+  let lastErr = '';
+  for (const url of urls) {
+    try {
+      const r = await fetch(url, init);
+      if (r.status === 404) { lastErr = `404 at ${url}`; continue; }
+      const text = await r.text();
+      let parsed: any;
+      try { parsed = text ? JSON.parse(text) : {}; } catch { parsed = { raw: text }; }
+      if (!r.ok) throw new Error(`${r.status}: ${text}`);
+      return parsed;
+    } catch (e) {
+      lastErr = (e as Error).message;
+    }
+  }
+  throw new Error(`Monitor endpoint failed: ${lastErr}`);
+}
+
+async function resolveCompanyForUser(supabaseClient: any, userId: string, providedCompanyId?: string) {
+  if (providedCompanyId) return providedCompanyId;
+  const { data } = await supabaseClient
+    .from('company_members')
+    .select('company_id, is_primary')
+    .eq('user_id', userId)
+    .order('is_primary', { ascending: false })
+    .limit(1);
+  return data?.[0]?.company_id ?? null;
+}
+
+async function startAutoDMMonitor(supabaseClient: any, userId: string, apiKey: string, data: any) {
+  const { companyId: providedCompanyId, companyUsername, post_url, reply_message, trigger_keywords, monitoring_interval } = data || {};
+  if (!companyUsername || !post_url || !reply_message) {
+    throw new Error('Missing required fields: companyUsername, post_url, reply_message');
+  }
+  const companyId = await resolveCompanyForUser(supabaseClient, userId, providedCompanyId);
+  if (!companyId) throw new Error('No company resolved for user');
+
+  const body: Record<string, any> = {
+    profile_username: companyUsername,
+    post_url,
+    reply_message,
+  };
+  if (trigger_keywords && (Array.isArray(trigger_keywords) ? trigger_keywords.length : true)) {
+    body.trigger_keywords = trigger_keywords;
+  }
+  if (monitoring_interval && monitoring_interval >= 15) body.monitoring_interval = monitoring_interval;
+
+  console.log('🤖 Starting AutoDM monitor:', { companyUsername, post_url });
+  const result = await callMonitorEndpoint('/start', 'POST', apiKey, body);
+  const remoteId = result?.monitor_id || result?.id || result?.data?.monitor_id || null;
+
+  const { data: row, error: insertErr } = await supabaseClient
+    .from('autodm_monitors')
+    .insert({
+      company_id: companyId,
+      created_by: userId,
+      company_username: companyUsername,
+      monitor_id: remoteId ? String(remoteId) : null,
+      post_url,
+      reply_message,
+      trigger_keywords: Array.isArray(trigger_keywords) ? trigger_keywords : (trigger_keywords ? [trigger_keywords] : []),
+      monitoring_interval: monitoring_interval && monitoring_interval >= 15 ? monitoring_interval : 15,
+      status: 'running',
+      expires_at: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString(),
+    })
+    .select()
+    .single();
+
+  if (insertErr) console.error('Failed to persist monitor:', insertErr);
+  return { success: true, monitor: row, remote: result };
+}
+
+async function listAutoDMMonitors(supabaseClient: any, userId: string, apiKey: string, data: any) {
+  const companyId = await resolveCompanyForUser(supabaseClient, userId, data?.companyId);
+  if (!companyId) return { success: true, monitors: [] };
+
+  // Try to refresh remote status if available
+  let remoteStatus: any = null;
+  try { remoteStatus = await callMonitorEndpoint('/status', 'GET', apiKey); } catch (e) { console.warn('No remote monitor status:', (e as Error).message); }
+
+  const { data: monitors, error } = await supabaseClient
+    .from('autodm_monitors')
+    .select('*')
+    .eq('company_id', companyId)
+    .order('created_at', { ascending: false });
+
+  if (error) throw error;
+  return { success: true, monitors: monitors || [], remote_status: remoteStatus };
+}
+
+async function changeMonitorStatus(action: 'pause' | 'resume' | 'stop' | 'delete', supabaseClient: any, userId: string, apiKey: string, data: any) {
+  const { id, monitor_id: remoteId } = data || {};
+  if (!id && !remoteId) throw new Error('Missing monitor id');
+
+  let row: any = null;
+  if (id) {
+    const { data: r } = await supabaseClient.from('autodm_monitors').select('*').eq('id', id).single();
+    row = r;
+  }
+  const remote = remoteId || row?.monitor_id;
+  if (!remote) throw new Error('No remote monitor_id available');
+
+  const result = await callMonitorEndpoint(`/${action}`, action === 'delete' ? 'DELETE' : 'POST', apiKey, { monitor_id: remote });
+
+  const newStatus = action === 'pause' ? 'paused' : action === 'resume' ? 'running' : action === 'stop' ? 'stopped' : null;
+  if (id) {
+    if (action === 'delete') {
+      await supabaseClient.from('autodm_monitors').delete().eq('id', id);
+    } else if (newStatus) {
+      await supabaseClient.from('autodm_monitors').update({ status: newStatus }).eq('id', id);
+    }
+  }
+  return { success: true, action, remote: result };
+}
+
+const pauseAutoDMMonitor  = (s: any, u: string, k: string, d: any) => changeMonitorStatus('pause', s, u, k, d);
+const resumeAutoDMMonitor = (s: any, u: string, k: string, d: any) => changeMonitorStatus('resume', s, u, k, d);
+const stopAutoDMMonitor   = (s: any, u: string, k: string, d: any) => changeMonitorStatus('stop', s, u, k, d);
+const deleteAutoDMMonitor = (s: any, u: string, k: string, d: any) => changeMonitorStatus('delete', s, u, k, d);
+
+async function getAutoDMMonitorLogs(supabaseClient: any, _userId: string, apiKey: string, data: any) {
+  const { id, monitor_id: remoteId } = data || {};
+  let row: any = null;
+  if (id) {
+    const { data: r } = await supabaseClient.from('autodm_monitors').select('*').eq('id', id).single();
+    row = r;
+  }
+  const remote = remoteId || row?.monitor_id;
+  let remoteLogs: any = null;
+  if (remote) {
+    try {
+      remoteLogs = await callMonitorEndpoint(`/logs?monitor_id=${encodeURIComponent(remote)}`, 'GET', apiKey);
+    } catch (e) { console.warn('Remote logs unavailable:', (e as Error).message); }
+  }
+  let localLogs: any[] = [];
+  if (id) {
+    const { data: logs } = await supabaseClient
+      .from('autodm_monitor_logs').select('*')
+      .eq('monitor_id', id).order('created_at', { ascending: false }).limit(200);
+    localLogs = logs || [];
+  }
+  return { success: true, local_logs: localLogs, remote_logs: remoteLogs };
+}
+
+// =====================================================================
+// Google Business Profile locations
+// =====================================================================
+async function getGoogleBusinessLocations(apiKey: string, data: any) {
+  const { companyUsername } = data || {};
+  const url = new URL('https://api.upload-post.com/api/uploadposts/google-business/locations');
+  if (companyUsername) url.searchParams.set('profile', companyUsername);
+
+  const response = await fetch(url.toString(), {
+    method: 'GET',
+    headers: { 'Authorization': AUTH_HEADER(apiKey), 'Content-Type': 'application/json' },
+  });
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Error getting GBP locations: ${response.status} - ${errorText}`);
+  }
+  return { success: true, ...(await response.json()) };
+}
+
+// =====================================================================
+// Public reply to comment (visible under comment)
+// =====================================================================
+async function publicReplyComment(apiKey: string, data: any) {
+  const { platform = 'instagram', companyUsername, comment_id, message } = data || {};
+  if (!companyUsername || !comment_id || !message) {
+    throw new Error('Missing required fields: companyUsername, comment_id, message');
+  }
+
+  const response = await fetch('https://api.upload-post.com/api/uploadposts/comments/public-reply', {
+    method: 'POST',
+    headers: { 'Authorization': AUTH_HEADER(apiKey), 'Content-Type': 'application/json' },
+    body: JSON.stringify({ platform, user: companyUsername, comment_id, message }),
+  });
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Error posting public reply: ${response.status} - ${errorText}`);
+  }
+  return { success: true, ...(await response.json()) };
+}

@@ -405,5 +405,44 @@
     "unassigned": "Não atribuído",
     "noMembers": "Adicione membros à equipe primeiro.",
     "info": "M-shaped: generalistas que orquestram agentes IA. T-shaped: especialistas de domínio profundo. Frontline: operacionais empoderados com ferramentas IA."
+  },
+  "approvals": {
+    "title": "Centro de Aprovações",
+    "subtitle": "Revise e autorize as ações que o Autopilot tem pendentes.",
+    "pendingShort": "pendentes",
+    "unknownAgent": "Agente não especificado",
+    "cta": {
+      "pending": "Ações do Autopilot aguardando sua autorização",
+      "empty": "Sistema em modo de observação. As próximas ações aparecerão aqui."
+    },
+    "empty": {
+      "title": "Sistema em modo de observação",
+      "description": "As próximas ações propostas pelo Autopilot aparecerão aqui para sua revisão."
+    },
+    "actions": {
+      "approve": "Aprovar",
+      "reject": "Rejeitar",
+      "detail": "Ver detalhe"
+    },
+    "risk": {
+      "low": "BAIXO",
+      "medium": "MÉDIO",
+      "high": "ALTO",
+      "critical": "CRÍTICO"
+    },
+    "detail": {
+      "title": "Detalhe da ação",
+      "reasoning": "Raciocínio",
+      "parameters": "Parâmetros da ação",
+      "expectedImpact": "Impacto esperado"
+    },
+    "toast": {
+      "approved": "Ação aprovada",
+      "rejected": "Ação rejeitada"
+    },
+    "errors": {
+      "load": "Não foi possível carregar as ações pendentes",
+      "action": "Não foi possível registrar a decisão"
+    }
   }
 }

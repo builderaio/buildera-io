@@ -118,9 +118,13 @@ const ContentGenerator = ({ profile }: ContentGeneratorProps) => {
       
       setPrompt("");
     } catch (error) {
+      console.error('Error generating content:', error);
+      const parsed = await parseAIServiceError(error);
       toast({
         title: t('errors:general.title'),
-        description: t('marketing:generator.errorGenerating'),
+        description: t(getAIErrorTranslationKey(parsed.code), {
+          defaultValue: t('marketing:generator.errorGenerating'),
+        }),
         variant: "destructive",
       });
     } finally {

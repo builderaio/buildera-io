@@ -344,6 +344,7 @@ serve(async (req) => {
       JSON.stringify({
         success: true,
         output: outputText,
+        response: outputText, // Backwards compat alias for callers using `response`
         model: modelName,
         functionName: functionName,
         usage: data.usage || null,

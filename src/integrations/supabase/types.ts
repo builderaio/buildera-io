@@ -5561,6 +5561,10 @@ export type Database = {
         Row: {
           actions_taken: Json | null
           company_id: string
+          content_approved: number
+          content_generated: number
+          content_pending_review: number
+          content_rejected: number
           context_snapshot: Json | null
           created_at: string
           credits_consumed: number
@@ -5577,6 +5581,10 @@ export type Database = {
         Insert: {
           actions_taken?: Json | null
           company_id: string
+          content_approved?: number
+          content_generated?: number
+          content_pending_review?: number
+          content_rejected?: number
           context_snapshot?: Json | null
           created_at?: string
           credits_consumed?: number
@@ -5593,6 +5601,10 @@ export type Database = {
         Update: {
           actions_taken?: Json | null
           company_id?: string
+          content_approved?: number
+          content_generated?: number
+          content_pending_review?: number
+          content_rejected?: number
           context_snapshot?: Json | null
           created_at?: string
           credits_consumed?: number

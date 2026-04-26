@@ -513,6 +513,46 @@ const BusinessHealthDashboard = ({ profile, onNavigate }: BusinessHealthDashboar
         <EnterpriseAutopilotStatusCard companyId={companyId} departments={deptConfigs} onNavigate={handleNavigate} />
       )}
 
+      {/* Approval Center quick access */}
+      {companyId && (
+        <Card
+          className={cn(
+            "transition cursor-pointer hover:shadow-md",
+            pendingApprovals > 0
+              ? "border-primary/40 bg-primary/5"
+              : "border-dashed"
+          )}
+          onClick={() => handleNavigate('aprobaciones')}
+        >
+          <CardContent className="py-4 px-4 flex items-center gap-4">
+            <div className={cn(
+              "rounded-full p-2.5 shrink-0",
+              pendingApprovals > 0 ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground"
+            )}>
+              <ClipboardCheck className="w-5 h-5" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h3 className="font-semibold text-sm md:text-base">
+                  {t('company:approvals.title', 'Centro de Aprobaciones')}
+                </h3>
+                {pendingApprovals > 0 && (
+                  <Badge variant="default">
+                    {pendingApprovals} {t('company:approvals.pendingShort', 'pendientes')}
+                  </Badge>
+                )}
+              </div>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                {pendingApprovals > 0
+                  ? t('company:approvals.cta.pending', 'Acciones del Autopilot esperando tu autorización')
+                  : t('company:approvals.cta.empty', 'Sistema en modo observación. Las próximas acciones aparecerán aquí.')}
+              </p>
+            </div>
+            <ArrowRight className="w-4 h-4 text-muted-foreground shrink-0" />
+          </CardContent>
+        </Card>
+      )}
+
       {/* Enterprise Welcome (show once when departments exist but none active) */}
       {companyId && deptConfigs.length > 0 && !deptConfigs.some(d => d.autopilot_enabled) && (
         <EnterpriseAutopilotWelcome unlockedDepartments={deptConfigs.map(d => d.department)} />

@@ -1364,7 +1364,8 @@ async function learnPhase(companyId: string, department: string, cycleId: string
   }));
 
   if (rows.length) {
-    await supabase.from('autopilot_decisions').insert(rows);
+    const { error: decErr } = await supabase.from('autopilot_decisions').insert(rows);
+    if (decErr) console.error(`❌ [${department}] autopilot_decisions INSERT FAILED:`, decErr);
   }
 
   // Store in memory for future reasoning with context_hash (GAP 2)
@@ -1380,7 +1381,8 @@ async function learnPhase(companyId: string, department: string, cycleId: string
   }));
 
   if (memoryRows.length) {
-    await supabase.from('autopilot_memory').insert(memoryRows);
+    const { error: memErr } = await supabase.from('autopilot_memory').insert(memoryRows);
+    if (memErr) console.error(`❌ [${department}] autopilot_memory INSERT FAILED:`, memErr);
   }
 
   // Evaluate past decisions (older than 7 days, still pending)
@@ -1591,7 +1593,7 @@ async function learnPhase(companyId: string, department: string, cycleId: string
 }
 
 async function logExecution(companyId: string, cycleId: string, department: string, phase: string, status: string, data: any) {
-  await supabase.from('department_execution_log').insert({
+  const { error: logError } = await supabase.from('department_execution_log').insert({
     company_id: companyId,
     cycle_id: cycleId,
     department,
@@ -1608,6 +1610,9 @@ async function logExecution(companyId: string, cycleId: string, department: stri
     error_message: data.error_message || null,
     context_snapshot: data.context_snapshot || null,
   });
+  if (logError) {
+    console.error(`❌ [${department}] department_execution_log INSERT FAILED (phase=${phase}):`, logError);
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════

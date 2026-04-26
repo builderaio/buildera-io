@@ -1,11 +1,12 @@
 import { useTranslation } from "react-i18next";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Shield, CreditCard, Bell, Users, Bot } from "lucide-react";
+import { Shield, CreditCard, Bell, Users, Bot, Activity } from "lucide-react";
 import AuthMethodManager from "@/components/auth/AuthMethodManager";
 import PlanSubscription from "./PlanSubscription";
 import NotificationPreferences from "./NotificationPreferences";
 import { ADNTeamTab, ADNAgentPrefsSimplified } from "./adn-tabs";
+import SystemStatusPanel from "./SystemStatusPanel";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 

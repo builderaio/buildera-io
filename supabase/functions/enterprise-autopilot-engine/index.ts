@@ -1236,7 +1236,7 @@ async function actPhase(companyId: string, department: string, guardedDecisions:
 
     } else if (decision.guardrail_result === 'escalated') {
       // Critical risk — executive escalation, do NOT execute
-      await supabase.from('content_approvals').insert({
+      const { error: escErr } = await supabase.from('content_approvals').insert({
         company_id: companyId,
         content_type: `autopilot_${department}_decision`,
         content_data: {
@@ -1248,6 +1248,7 @@ async function actPhase(companyId: string, department: string, guardedDecisions:
         submitted_by: 'enterprise_autopilot_engine',
         notes: `[⚠️ EXECUTIVE ESCALATION] [${department}] [Cycle ${cycleId}] Critical risk: ${decision.description}`,
       });
+      if (escErr) console.error(`❌ content_approvals INSERT FAILED (escalated, ${department}):`, escErr);
       nonExecutable.push({ ...decision, action_taken: false, escalated: true });
 
     } else if (decision.guardrail_result === 'requires_approval' || decision.guardrail_result === 'sent_to_approval') {

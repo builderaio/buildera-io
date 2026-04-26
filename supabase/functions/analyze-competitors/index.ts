@@ -165,7 +165,7 @@ serve(async (req) => {
 
     } catch (fetchError) {
       clearTimeout(timeout);
-      if (fetchError.name === 'AbortError') {
+      if ((fetchError as Error).name === 'AbortError') {
         return new Response(
           JSON.stringify({ error: 'Request timeout - analysis took too long' }),
           { status: 504, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

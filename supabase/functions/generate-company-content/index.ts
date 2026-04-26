@@ -486,11 +486,39 @@ La propuesta de valor debe explicar claramente qué hace única a esta empresa y
 
   } catch (error: any) {
     console.error('❌ Error en generate-company-content:', error);
-    return new Response(JSON.stringify({ 
+
+    const message: string = error?.message || 'Internal server error';
+    let status = 500;
+    let errorCode = 'internal_error';
+
+    // Map known OpenAI HTTP signals embedded in our thrown errors
+    const m = message.match(/Error de OpenAI:\s*(\d{3})/i);
+    if (m) {
+      const upstream = parseInt(m[1], 10);
+      if (upstream === 429) {
+        status = 429;
+        errorCode = 'rate_limited';
+      } else if (upstream === 401 || upstream === 403) {
+        status = 503;
+        errorCode = 'service_unavailable';
+      } else if (upstream === 402 || /quota|insufficient/i.test(message)) {
+        status = 402;
+        errorCode = 'quota_exceeded';
+      } else if (upstream >= 500) {
+        status = 502;
+        errorCode = 'upstream_error';
+      }
+    } else if (/OPENAI_API_KEY/i.test(message)) {
+      status = 503;
+      errorCode = 'service_unavailable';
+    }
+
+    return new Response(JSON.stringify({
       success: false,
-      error: error.message || 'Error interno del servidor' 
+      error_code: errorCode,
+      error: message,
     }), {
-      status: 500,
+      status,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }

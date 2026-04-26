@@ -101,3 +101,6 @@ verify_jwt = false
 
 [functions.generate-brand-identity]
 verify_jwt = false
+
+[functions.system-status]
+verify_jwt = true

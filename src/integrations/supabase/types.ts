@@ -9265,6 +9265,7 @@ export type Database = {
           connected_at: string | null
           created_at: string
           facebook_page_id: string | null
+          google_business_location_id: string | null
           id: string
           is_connected: boolean | null
           last_sync_at: string | null
@@ -9273,6 +9274,7 @@ export type Database = {
           platform: string
           platform_display_name: string | null
           platform_username: string | null
+          reauth_required: boolean
           updated_at: string
           upload_post_profile_exists: boolean | null
           user_id: string
@@ -9284,6 +9286,7 @@ export type Database = {
           connected_at?: string | null
           created_at?: string
           facebook_page_id?: string | null
+          google_business_location_id?: string | null
           id?: string
           is_connected?: boolean | null
           last_sync_at?: string | null
@@ -9292,6 +9295,7 @@ export type Database = {
           platform: string
           platform_display_name?: string | null
           platform_username?: string | null
+          reauth_required?: boolean
           updated_at?: string
           upload_post_profile_exists?: boolean | null
           user_id: string
@@ -9303,6 +9307,7 @@ export type Database = {
           connected_at?: string | null
           created_at?: string
           facebook_page_id?: string | null
+          google_business_location_id?: string | null
           id?: string
           is_connected?: boolean | null
           last_sync_at?: string | null
@@ -9311,6 +9316,7 @@ export type Database = {
           platform?: string
           platform_display_name?: string | null
           platform_username?: string | null
+          reauth_required?: boolean
           updated_at?: string
           upload_post_profile_exists?: boolean | null
           user_id?: string

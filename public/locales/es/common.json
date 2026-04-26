@@ -199,7 +199,8 @@
     "autopilot": "Autopilot",
     "autopilotActive": "Activo",
     "autopilotInactive": "Inactivo",
-    "enterpriseBrain": "Cerebro Empresarial"
+    "enterpriseBrain": "Cerebro Empresarial",
+    "approvals": "Aprobaciones"
   },
   "dashboard": {
     "vsPreviousMonth": "vs. mes anterior",

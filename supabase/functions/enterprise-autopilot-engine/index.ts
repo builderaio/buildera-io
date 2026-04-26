@@ -1253,7 +1253,7 @@ async function actPhase(companyId: string, department: string, guardedDecisions:
 
     } else if (decision.guardrail_result === 'requires_approval' || decision.guardrail_result === 'sent_to_approval') {
       // High risk — requires human approval before execution
-      await supabase.from('content_approvals').insert({
+      const { error: appErr } = await supabase.from('content_approvals').insert({
         company_id: companyId,
         content_type: `autopilot_${department}_decision`,
         content_data: decision,
@@ -1261,6 +1261,7 @@ async function actPhase(companyId: string, department: string, guardedDecisions:
         submitted_by: 'enterprise_autopilot_engine',
         notes: `[Enterprise Autopilot ${department}] [Cycle ${cycleId}] ${decision.description}`,
       });
+      if (appErr) console.error(`❌ content_approvals INSERT FAILED (requires_approval, ${department}):`, appErr);
       nonExecutable.push({ ...decision, action_taken: false, sent_to_approval: true });
 
     } else if (decision.guardrail_result === 'post_review') {

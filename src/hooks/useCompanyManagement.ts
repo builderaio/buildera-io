@@ -18,7 +18,7 @@ export interface Company {
   propuesta_valor?: string;
   mision?: string;
   vision?: string;
-  valores_corporativos?: string[];
+  
 }
 
 export interface CompanyMember {
@@ -56,8 +56,7 @@ export const useCompanyManagement = () => {
             company_strategy (
               propuesta_valor,
               mision,
-              vision,
-              valores_corporativos
+              vision
             )
           )
         `)

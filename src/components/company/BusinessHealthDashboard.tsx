@@ -583,6 +583,11 @@ const BusinessHealthDashboard = ({ profile, onNavigate }: BusinessHealthDashboar
         </div>
       </div>
 
+      {/* DNA Setup checklist (post-onboarding) */}
+      {!(company as any)?.dna_setup_completed && (
+        <DnaSetupChecklist onNavigate={(view) => handleNavigate(view)} />
+      )}
+
       {/* Enterprise Autopilot Status Card */}
       {companyId && (
         <EnterpriseAutopilotStatusCard companyId={companyId} departments={deptConfigs} onNavigate={handleNavigate} />

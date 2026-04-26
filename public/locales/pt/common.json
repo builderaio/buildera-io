@@ -1879,5 +1879,45 @@
       "title": "Créditos disponíveis",
       "topUp": "Recarregar créditos →"
     }
+  },
+  "strategic": {
+    "ops": {
+      "never": "Nunca executado",
+      "justNow": "Agora mesmo",
+      "minAgo": "há {{min}} min",
+      "hoursAgo": "há {{h}}h",
+      "daysAgo": "há {{d}}d",
+      "active": "ativos",
+      "review": "Revisar",
+      "executed": "Executada",
+      "blocked": "Bloqueada",
+      "topUp": "Recarregar créditos →",
+      "manageGovernance": "Gerenciar governança →",
+      "creditsTitle": "Orçamento de créditos",
+      "creditsConsumed": "Consumidos neste ciclo",
+      "creditsLow": "Baixo",
+      "creditsEmpty": "Sem créditos",
+      "approvalsTitle": "Aprovações pendentes",
+      "approvalsEmpty": "Nada pendente — tudo aprovado ou sem solicitações",
+      "deptTitle": "Estado dos departamentos",
+      "decisionsTitle": "Últimas decisões do Autopilot",
+      "decisionsEmpty": "O Autopilot ainda não tomou decisões. Aparecerão aqui assim que o sistema começar a operar.",
+      "guardrailsTitle": "Guardrails ativos",
+      "guardrailsEmpty": "Sem guardrails configurados. Configure limites por departamento para reforçar a governança.",
+      "dept": {
+        "active": "Ativo",
+        "inactive": "Inativo",
+        "unconfigured": "Sem configuração",
+        "humanApproval": "Aprovação humana"
+      },
+      "departments": {
+        "marketing": "Marketing",
+        "sales": "Vendas",
+        "finance": "Finanças",
+        "legal": "Legal",
+        "talent": "Talento",
+        "operations": "Operações"
+      }
+    }
   }
 }

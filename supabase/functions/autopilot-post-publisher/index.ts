@@ -97,9 +97,9 @@ serve(async (req) => {
 
     // 3. Filter platforms by post type support
     const supportedPlatforms: Record<string, string[]> = {
-      text: ['linkedin', 'x', 'facebook', 'threads', 'reddit', 'bluesky'],
-      photo: ['tiktok', 'instagram', 'linkedin', 'facebook', 'x', 'threads', 'pinterest', 'reddit', 'bluesky'],
-      video: ['tiktok', 'instagram', 'linkedin', 'youtube', 'facebook', 'x', 'threads', 'pinterest', 'reddit', 'bluesky'],
+      text: ['linkedin', 'x', 'facebook', 'threads', 'reddit', 'bluesky', 'google_business'],
+      photo: ['tiktok', 'instagram', 'linkedin', 'facebook', 'x', 'threads', 'pinterest', 'reddit', 'bluesky', 'google_business'],
+      video: ['tiktok', 'instagram', 'linkedin', 'youtube', 'facebook', 'x', 'threads', 'pinterest', 'reddit', 'bluesky', 'google_business'],
     };
 
     const normalizedPlatforms = platforms.map(p => p === 'twitter' ? 'x' : p);

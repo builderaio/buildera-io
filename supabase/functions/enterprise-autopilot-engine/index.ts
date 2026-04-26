@@ -1417,7 +1417,7 @@ async function learnPhase(companyId: string, department: string, cycleId: string
         } else if (pe.decision_type === 'qualify_lead' || pe.decision_type === 'advance_deal') {
           // Check if deals advanced in pipeline after this decision
           const { data: advancedDeals } = await supabase.from('crm_deals')
-            .select('id, stage')
+            .select('id, stage_id')
             .eq('company_id', companyId)
             .gte('updated_at', pe.created_at)
             .limit(10);
@@ -1440,7 +1440,7 @@ async function learnPhase(companyId: string, department: string, cycleId: string
         } else if (['create_proposal', 'forecast_pipeline', 'enrich_contact'].includes(pe.decision_type)) {
           // Sales: check deal movement and contact enrichment
           const { data: dealUpdates } = await supabase.from('crm_deals')
-            .select('id, value').eq('company_id', companyId).gte('updated_at', pe.created_at).limit(10);
+            .select('id, amount').eq('company_id', companyId).gte('updated_at', pe.created_at).limit(10);
           const { data: contactUpdates } = await supabase.from('crm_contacts')
             .select('id').eq('company_id', companyId).gte('updated_at', pe.created_at).limit(10);
           const totalActivity = (dealUpdates?.length || 0) + (contactUpdates?.length || 0);

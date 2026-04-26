@@ -257,7 +257,7 @@ async function gatherExternalIntelligence(companyId: string, maturityLevel: stri
       const aiResult = await aiRes.json();
       if (aiResult.success) {
         const parsed = tryParseJson(aiResult.response);
-        await supabase.from('external_intelligence_cache').insert({
+        const { error: extErr } = await supabase.from('external_intelligence_cache').insert({
           company_id: companyId,
           source: q.source as any,
           region: company.country,
@@ -268,7 +268,10 @@ async function gatherExternalIntelligence(companyId: string, maturityLevel: stri
           relevance_score: 0.7,
           expires_at: new Date(Date.now() + 24 * 3600000).toISOString(),
         });
+        if (extErr) console.error(`❌ external_intelligence_cache INSERT FAILED (source=${q.source}):`, extErr);
         results.push({ source: q.source, signals: parsed || [] });
+      } else {
+        console.warn(`⚠️ External intelligence AI call failed for ${q.source}: ${aiResult.error || 'unknown'}`);
       }
     } catch (e) {
       console.error(`External intelligence fetch failed for ${q.source}:`, e);
@@ -1193,7 +1196,7 @@ async function executeAgentForDecision(
     const agentResult = await agentRes.json();
     const execTime = Date.now() - execStart;
 
-    await supabase.from('agent_usage_log').insert({
+    const { error: usageErr } = await supabase.from('agent_usage_log').insert({
       agent_id: agent.id,
       company_id: companyId,
       status: agentResult.success !== false ? 'completed' : 'failed',
@@ -1204,6 +1207,7 @@ async function executeAgentForDecision(
       output_summary: agentResult.summary || decision.description,
       error_message: agentResult.error || null,
     });
+    if (usageErr) console.error(`❌ agent_usage_log INSERT FAILED (agent=${agentCode}, company=${companyId}):`, usageErr);
 
     return { ...decision, action_taken: true, execution_result: agentResult.success !== false ? 'success' : 'failed' };
   } catch (err) {
@@ -1232,7 +1236,7 @@ async function actPhase(companyId: string, department: string, guardedDecisions:
 
     } else if (decision.guardrail_result === 'escalated') {
       // Critical risk — executive escalation, do NOT execute
-      await supabase.from('content_approvals').insert({
+      const { error: escErr } = await supabase.from('content_approvals').insert({
         company_id: companyId,
         content_type: `autopilot_${department}_decision`,
         content_data: {
@@ -1244,11 +1248,12 @@ async function actPhase(companyId: string, department: string, guardedDecisions:
         submitted_by: 'enterprise_autopilot_engine',
         notes: `[⚠️ EXECUTIVE ESCALATION] [${department}] [Cycle ${cycleId}] Critical risk: ${decision.description}`,
       });
+      if (escErr) console.error(`❌ content_approvals INSERT FAILED (escalated, ${department}):`, escErr);
       nonExecutable.push({ ...decision, action_taken: false, escalated: true });
 
     } else if (decision.guardrail_result === 'requires_approval' || decision.guardrail_result === 'sent_to_approval') {
       // High risk — requires human approval before execution
-      await supabase.from('content_approvals').insert({
+      const { error: appErr } = await supabase.from('content_approvals').insert({
         company_id: companyId,
         content_type: `autopilot_${department}_decision`,
         content_data: decision,
@@ -1256,6 +1261,7 @@ async function actPhase(companyId: string, department: string, guardedDecisions:
         submitted_by: 'enterprise_autopilot_engine',
         notes: `[Enterprise Autopilot ${department}] [Cycle ${cycleId}] ${decision.description}`,
       });
+      if (appErr) console.error(`❌ content_approvals INSERT FAILED (requires_approval, ${department}):`, appErr);
       nonExecutable.push({ ...decision, action_taken: false, sent_to_approval: true });
 
     } else if (decision.guardrail_result === 'post_review') {
@@ -1308,7 +1314,7 @@ async function actPhase(companyId: string, department: string, guardedDecisions:
     );
     if (executedResult) {
       try {
-        await supabase.from('content_approvals').insert({
+        const { error: prInsErr } = await supabase.from('content_approvals').insert({
           company_id: companyId,
           content_type: `autopilot_${department}_post_review`,
           content_data: {
@@ -1320,8 +1326,9 @@ async function actPhase(companyId: string, department: string, guardedDecisions:
           submitted_by: 'enterprise_autopilot_engine',
           notes: `[POST-REVIEW] [${department}] [Cycle ${cycleId}] Executed (medium risk) — pending human review: ${decision.description}`,
         });
+        if (prInsErr) console.error(`❌ content_approvals INSERT FAILED (post_review, ${department}):`, prInsErr);
       } catch (prErr) {
-        console.warn(`⚠️ Post-review approval insert failed:`, prErr);
+        console.error(`❌ Post-review approval insert threw:`, prErr);
       }
     }
   }
@@ -1949,7 +1956,7 @@ IMPORTANT:
         console.log(`🚀 [${department}] Auto-activated trial (low risk, until ${trialExpiry}): ${cap.code}`);
       } else if (riskLevel === 'medium') {
         // Medium risk: submit for user review via content_approvals
-        await supabase.from('content_approvals').insert({
+        const { error: capMedErr } = await supabase.from('content_approvals').insert({
           company_id: companyId,
           content_type: 'capability_approval',
           content_id: cap.code,
@@ -1967,10 +1974,11 @@ IMPORTANT:
           submitted_by: 'capability_genesis_engine',
           notes: `[Capability Genesis] New ${riskLevel}-risk capability proposed: ${cap.name}. Requires user review before activation.`,
         });
+        if (capMedErr) console.error(`❌ content_approvals INSERT FAILED (capability medium, ${cap.code}):`, capMedErr);
         console.log(`📋 [${department}] Medium-risk capability sent for review: ${cap.code}`);
       } else if (riskLevel === 'high') {
         // High risk: explicit human approval required
-        await supabase.from('content_approvals').insert({
+        const { error: capHiErr } = await supabase.from('content_approvals').insert({
           company_id: companyId,
           content_type: 'capability_approval',
           content_id: cap.code,
@@ -1989,6 +1997,7 @@ IMPORTANT:
           submitted_by: 'capability_genesis_engine',
           notes: `[⚠️ HIGH RISK] [Capability Genesis] New high-risk capability: ${cap.name}. REQUIRES EXPLICIT HUMAN APPROVAL before any activation.`,
         });
+        if (capHiErr) console.error(`❌ content_approvals INSERT FAILED (capability high, ${cap.code}):`, capHiErr);
         console.log(`🔒 [${department}] High-risk capability requires human approval: ${cap.code}`);
       }
     }
@@ -2263,7 +2272,7 @@ async function runDepartmentCycle(companyId: string, department: string, deptCon
           } else {
             // Still insufficient - log bootstrap_required decision
             console.warn(`🚫 [marketing] Bootstrap completed but still insufficient data.`);
-            await supabase.from('autopilot_decisions').insert({
+            const { error: csErr } = await supabase.from('autopilot_decisions').insert({
               company_id: companyId,
               cycle_id: cycleId,
               decision_type: 'cold_start_content',
@@ -2274,6 +2283,7 @@ async function runDepartmentCycle(companyId: string, department: string, deptCon
               guardrail_result: 'needs_action',
               expected_impact: { suggested_action: 'generate_initial_content' },
             });
+            if (csErr) console.error(`❌ autopilot_decisions INSERT FAILED (cold_start_after_scrape, ${department}):`, csErr);
             await logExecution(companyId, cycleId, department, 'sense', 'needs_bootstrap', {
               error_message: `Bootstrap attempted but: ${sufficiency2.reason}`,
               context_snapshot: senseData2,
@@ -2283,7 +2293,7 @@ async function runDepartmentCycle(companyId: string, department: string, deptCon
           }
         } else if (accountsToScrape.length === 0) {
           // No connected accounts at all
-          await supabase.from('autopilot_decisions').insert({
+          const { error: csErr2 } = await supabase.from('autopilot_decisions').insert({
             company_id: companyId,
             cycle_id: cycleId,
             decision_type: 'cold_start_content',
@@ -2294,6 +2304,7 @@ async function runDepartmentCycle(companyId: string, department: string, deptCon
             guardrail_result: 'needs_action',
             expected_impact: { suggested_action: 'generate_initial_content' },
           });
+          if (csErr2) console.error(`❌ autopilot_decisions INSERT FAILED (cold_start_no_accounts, ${department}):`, csErr2);
           await logExecution(companyId, cycleId, department, 'sense', 'needs_bootstrap', {
             error_message: 'No connected social accounts. Bootstrap impossible.',
             context_snapshot: senseData,
@@ -2424,6 +2435,21 @@ async function runDepartmentCycle(companyId: string, department: string, deptCon
     });
     if (failLogError) {
       console.error(`❌ [${department}] autopilot_execution_log FAILURE INSERT FAILED:`, failLogError);
+    }
+    // Persist a visible decision row so autopilot_decisions reflects cycle-level failures (e.g., OpenAI 429)
+    const { error: failDecErr } = await supabase.from('autopilot_decisions').insert({
+      company_id: companyId,
+      cycle_id: cycleId,
+      decision_type: 'cycle_error',
+      priority: 'high',
+      description: `Autopilot cycle failed in ${department}`,
+      reasoning: (error as Error).message,
+      action_taken: false,
+      guardrail_result: 'blocked',
+      expected_impact: { error: true, department, phase: 'runtime' },
+    });
+    if (failDecErr) {
+      console.error(`❌ [${department}] autopilot_decisions FAILURE INSERT FAILED:`, failDecErr);
     }
     return { department, cycle_id: cycleId, success: false, error: (error as Error).message };
   }

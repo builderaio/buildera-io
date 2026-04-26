@@ -26,5 +26,14 @@
     "quotaDescription": "You have exceeded your monthly translation quota. Please contact support.",
     "translationError": "Translation error",
     "translationErrorDescription": "Could not translate content. Please try again."
+  },
+  "ai": {
+    "service_unavailable": "AI content generation is currently unavailable. Check your plan or contact support.",
+    "rate_limited": "Too many requests to the AI service. Please wait a few seconds and try again.",
+    "quota_exceeded": "You have exceeded your AI content generation quota. Contact support to upgrade.",
+    "upstream_error": "The AI provider is experiencing issues. Please try again in a few minutes.",
+    "network_error": "Could not reach the AI service. Please check your internet connection.",
+    "internal_error": "An internal error occurred while generating content. Please try again.",
+    "unknown": "Could not generate content. Please try again or contact support."
   }
 }

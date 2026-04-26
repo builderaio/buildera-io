@@ -25,6 +25,7 @@ import GovernanceDashboard from "@/components/company/GovernanceDashboard";
 import DepartmentConfigPanel from "@/components/company/departments/DepartmentConfigPanel";
 import DepartmentActivationGuide from "@/components/company/departments/DepartmentActivationGuide";
 import ApprovalCenter from "@/components/company/approvals/ApprovalCenter";
+import SystemActivityFeed from "@/components/company/SystemActivityFeed";
 
 // Legacy components (for backwards compatibility during transition)
 import MisArchivos from "@/components/company/BaseConocimiento";
@@ -446,6 +447,11 @@ const CompanyDashboard = () => {
       case "aprobaciones":
       case "approvals":
         return <ApprovalCenter />;
+
+      // === SYSTEM ACTIVITY FEED ===
+      case "actividad":
+      case "activity":
+        return <SystemActivityFeed />;
 
       // === DEPARTMENT CONFIG ===
       case "departamentos":

@@ -24,6 +24,7 @@ import { CRMDashboard } from "@/components/crm/CRMDashboard";
 import GovernanceDashboard from "@/components/company/GovernanceDashboard";
 import DepartmentConfigPanel from "@/components/company/departments/DepartmentConfigPanel";
 import DepartmentActivationGuide from "@/components/company/departments/DepartmentActivationGuide";
+import ApprovalCenter from "@/components/company/approvals/ApprovalCenter";
 
 // Legacy components (for backwards compatibility during transition)
 import MisArchivos from "@/components/company/BaseConocimiento";

@@ -550,6 +550,18 @@
     "missionPlaceholder": "Defina o propósito central da sua empresa...",
     "visionPlaceholder": "Como você vê sua empresa no futuro?",
     "valuePropositionPlaceholder": "Que valor único você oferece aos seus clientes?",
+    "corporateValues": "Valores corporativos",
+    "corporateValuesPlaceholder": "Liste os valores que orientam as decisões da sua empresa…",
+    "aiGenerate": {
+      "cta": "Gerar com IA",
+      "generating": "Gerando…",
+      "success": "Gerado com IA",
+      "missingCompany": "Faltam informações da empresa para gerar",
+      "failed": "Não foi possível gerar o conteúdo. Tente novamente.",
+      "unavailable": "A geração com IA está indisponível. Verifique a configuração do provedor de IA ou contate o suporte.",
+      "quota": "Cota de IA esgotada. Recarregue seu plano para continuar.",
+      "rateLimited": "Muitas solicitações. Aguarde um momento e tente novamente."
+    },
     "objectives": "Objetivos",
     "noObjectives": "Nenhum objetivo definido",
     "createManually": "Criar manualmente",

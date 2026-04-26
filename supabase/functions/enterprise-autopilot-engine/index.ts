@@ -98,13 +98,13 @@ const DEPARTMENT_REGISTRY: Record<string, DepartmentConfig> = {
       });
       return {
         totalDeals: d.length,
-        pipelineValue: d.reduce((s, deal) => s + (deal.value || 0), 0),
+        pipelineValue: d.reduce((s, deal) => s + (deal.amount || 0), 0),
         stalledDeals: stalled.length,
-        avgDealValue: d.length ? d.reduce((s, deal) => s + (deal.value || 0), 0) / d.length : 0,
+        avgDealValue: d.length ? d.reduce((s, deal) => s + (deal.amount || 0), 0) / d.length : 0,
         contactsCount: contacts.data?.length || 0,
         recentActivities: activities.data?.length || 0,
         stageDistribution: d.reduce((acc: Record<string, number>, deal) => {
-          acc[deal.stage || 'unknown'] = (acc[deal.stage || 'unknown'] || 0) + 1;
+          acc[deal.stage_id || 'unknown'] = (acc[deal.stage_id || 'unknown'] || 0) + 1;
           return acc;
         }, {}),
       };

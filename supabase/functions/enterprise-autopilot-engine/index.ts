@@ -1314,7 +1314,7 @@ async function actPhase(companyId: string, department: string, guardedDecisions:
     );
     if (executedResult) {
       try {
-        await supabase.from('content_approvals').insert({
+        const { error: prInsErr } = await supabase.from('content_approvals').insert({
           company_id: companyId,
           content_type: `autopilot_${department}_post_review`,
           content_data: {
@@ -1326,8 +1326,9 @@ async function actPhase(companyId: string, department: string, guardedDecisions:
           submitted_by: 'enterprise_autopilot_engine',
           notes: `[POST-REVIEW] [${department}] [Cycle ${cycleId}] Executed (medium risk) — pending human review: ${decision.description}`,
         });
+        if (prInsErr) console.error(`❌ content_approvals INSERT FAILED (post_review, ${department}):`, prInsErr);
       } catch (prErr) {
-        console.warn(`⚠️ Post-review approval insert failed:`, prErr);
+        console.error(`❌ Post-review approval insert threw:`, prErr);
       }
     }
   }

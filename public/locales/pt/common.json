@@ -809,7 +809,8 @@
       "security": "Segurança",
       "agents": "Agentes",
       "plan": "Meu Plano",
-      "notifications": "Alertas"
+      "notifications": "Alertas",
+      "system": "Sistema"
     },
     "team": {
       "title": "Membros da Equipe",

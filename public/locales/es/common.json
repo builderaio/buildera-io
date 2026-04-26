@@ -805,7 +805,8 @@
       "security": "Seguridad",
       "agents": "Agentes",
       "plan": "Mi Plan",
-      "notifications": "Alertas"
+      "notifications": "Alertas",
+      "system": "Sistema"
     },
     "team": {
       "title": "Miembros del Equipo",

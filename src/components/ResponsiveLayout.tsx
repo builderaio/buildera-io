@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
-import { Building, Bot, LogOut, Activity, Zap, Menu, Megaphone, Settings, User, Brain, Handshake, Shield, Sparkles, Crosshair } from 'lucide-react';
+import { Building, Bot, LogOut, Activity, Zap, Menu, Megaphone, Settings, User, Brain, Handshake, Shield, Sparkles, Crosshair, ClipboardCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';

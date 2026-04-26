@@ -240,6 +240,7 @@ const BusinessHealthDashboard = ({ profile, onNavigate }: BusinessHealthDashboar
   const [selectedAgent, setSelectedAgent] = useState<PlatformAgent | null>(null);
   const [agentPanelOpen, setAgentPanelOpen] = useState(false);
   const [primaryObjective, setPrimaryObjective] = useState<string | null>(null);
+  const [pendingApprovals, setPendingApprovals] = useState<number>(0);
 
   const { agents, enabledAgents: enabledAgentIds } = usePlatformAgents(companyId || undefined);
   const { availableCredits, refetch: refetchCredits } = useCompanyCredits(companyId || undefined, profile?.user_id);

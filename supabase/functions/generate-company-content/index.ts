@@ -21,11 +21,50 @@ serve(async (req) => {
 
   try {
     console.log('🤖 Iniciando generación de contenido con IA...');
-    
+
+    // Health-check endpoint: GET ?health=1 or body { health_check: true }
+    const url = new URL(req.url);
+    const isHealthCheckGet = req.method === 'GET' && url.searchParams.get('health') === '1';
+
+    let body: any = {};
+    if (req.method !== 'GET') {
+      try {
+        body = await req.json();
+      } catch (_) {
+        body = {};
+      }
+    }
+
+    if (isHealthCheckGet || body?.health_check === true) {
+      const available = !!openAIApiKey;
+      return new Response(JSON.stringify({
+        success: true,
+        service: 'generate-company-content',
+        available,
+        provider: 'openai',
+        error_code: available ? null : 'service_unavailable',
+        message: available
+          ? 'AI content generation service is operational.'
+          : 'OPENAI_API_KEY is not configured. Service unavailable.',
+      }), {
+        status: available ? 200 : 503,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     if (!openAIApiKey) {
       console.error('❌ OPENAI_API_KEY no está configurada');
-      throw new Error('OPENAI_API_KEY no está configurada');
+      return new Response(JSON.stringify({
+        success: false,
+        error_code: 'service_unavailable',
+        error: 'AI content generation service is not configured (missing OPENAI_API_KEY).',
+      }), {
+        status: 503,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
+
+    console.log('📝 Datos recibidos:', body);
 
     const body = await req.json();
     console.log('📝 Datos recibidos:', body);

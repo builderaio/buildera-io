@@ -2378,8 +2378,8 @@ async function runDepartmentCycle(companyId: string, department: string, deptCon
     const contentRejected = blocked;
     const contentPendingReview = pending;
 
-    try {
-      await supabase.from('autopilot_execution_log').insert({
+    {
+      const { error: cycleLogError } = await supabase.from('autopilot_execution_log').insert({
         company_id: companyId,
         cycle_id: cycleId,
         phase: 'complete_cycle',
@@ -2394,9 +2394,11 @@ async function runDepartmentCycle(companyId: string, department: string, deptCon
         content_rejected: contentRejected,
         content_pending_review: contentPendingReview,
       });
-      console.log(`📋 [${department}] Cycle summary logged to autopilot_execution_log (credits: ${cycleCreditsConsumed})`);
-    } catch (logErr) {
-      console.error(`⚠️ [${department}] Failed to write autopilot_execution_log:`, logErr);
+      if (cycleLogError) {
+        console.error(`❌ [${department}] autopilot_execution_log INSERT FAILED:`, cycleLogError);
+      } else {
+        console.log(`📋 [${department}] Cycle summary logged to autopilot_execution_log (credits: ${cycleCreditsConsumed})`);
+      }
     }
 
     console.log(`✅ [${department}] Cycle ${cycleId} done in ${totalExecutionTime}ms`);

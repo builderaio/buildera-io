@@ -363,6 +363,8 @@ const CompanyLayout = ({ profile, handleSignOut }: { profile: Profile; handleSig
       'gobernanza': '/company-dashboard?view=gobernanza',
       'aprobaciones': '/company-dashboard?view=aprobaciones',
       'approvals': '/company-dashboard?view=aprobaciones',
+      'actividad': '/company-dashboard?view=actividad',
+      'activity': '/company-dashboard?view=actividad',
       'departamentos': '/company-dashboard?view=departamentos',
       'activacion': '/company-dashboard?view=activacion',
       'profile': '/profile'
@@ -452,6 +454,7 @@ const CompanyLayout = ({ profile, handleSignOut }: { profile: Profile; handleSig
     { id: 'agentes', label: t('common:sidebar.aiAgents', 'Agentes IA'), icon: Bot, badge: null, minStep: 3 },
     { id: 'autopilot', label: t('common:sidebar.enterpriseBrain', 'Cerebro Empresarial'), icon: Brain, badge: activeDeptCount > 0 ? `${activeDeptCount}` : null, minStep: 3 },
     { id: 'aprobaciones', label: t('common:sidebar.approvals', 'Aprobaciones'), icon: ClipboardCheck, badge: pendingApprovals > 0 ? `${pendingApprovals}` : null, minStep: 3 },
+    { id: 'actividad', label: t('common:sidebar.systemActivity', 'Actividad del Sistema'), icon: Activity, badge: null, minStep: 3 },
     { id: 'gobernanza', label: t('common:sidebar.governance', 'Gobernanza'), icon: Shield, badge: null, minStep: 3 },
     { id: 'ventas', label: t('common:sidebar.salesCRM', 'Ventas / CRM'), icon: Handshake, badge: null, minStep: 4 },
     { id: 'departamentos', label: t('common:sidebar.departments', 'Departamentos'), icon: Settings, badge: null, minStep: 4 },

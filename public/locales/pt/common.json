@@ -202,7 +202,8 @@
     "autopilotActive": "Ativo",
     "autopilotInactive": "Inativo",
     "enterpriseBrain": "Cérebro Empresarial",
-    "approvals": "Aprovações"
+    "approvals": "Aprovações",
+    "systemActivity": "Atividade do Sistema"
   },
   "onboarding": {
     "checkingData": "Verificando dados da sua empresa...",
@@ -1808,6 +1809,25 @@
       "challengeSaved": "Desafio salvo",
       "missionSaved": "Missão salva",
       "completed": "Seu ADN Empresarial está configurado. O Autopilot está observando sua empresa."
+    }
+  },
+  "systemActivity": {
+    "title": "Atividade do Sistema",
+    "subtitle": "Cada fase do Autopilot — SENSE, THINK, GUARD, ACT, LEARN — registrada em tempo real.",
+    "live": "Ao vivo",
+    "approved": "aprovados",
+    "rejected": "rejeitados",
+    "pending": "pendentes",
+    "empty": {
+      "title": "O sistema está observando sua empresa",
+      "body": "O sistema está em modo SENSE há {{hours}} horas. As primeiras decisões aparecerão aqui.",
+      "hint": "O Autopilot prioriza observar antes de agir — isto é normal nos primeiros ciclos."
+    },
+    "row": {
+      "decisionsMade": "{{count}} decisão(ões) gerada(s)",
+      "actionsTaken": "{{count}} ação(ões) executada(s)",
+      "contentGenerated": "{{count}} peça(s) de conteúdo gerada(s)",
+      "observation": "Observação de fase registrada"
     }
   }
 }

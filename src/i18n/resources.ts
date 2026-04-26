@@ -14,6 +14,8 @@ import esValidation from '../../public/locales/es/validation.json';
 import esNotifications from '../../public/locales/es/notifications.json';
 import esCreatify from '../../public/locales/es/creatify.json';
 import esLegal from '../../public/locales/es/legal.json';
+import esPricing from '../../public/locales/es/pricing.json';
+import esGovernance from '../../public/locales/es/governance.json';
 // EN
 import enCommon from '../../public/locales/en/common.json';
 import enCompany from '../../public/locales/en/company.json';
@@ -29,6 +31,8 @@ import enValidation from '../../public/locales/en/validation.json';
 import enNotifications from '../../public/locales/en/notifications.json';
 import enCreatify from '../../public/locales/en/creatify.json';
 import enLegal from '../../public/locales/en/legal.json';
+import enPricing from '../../public/locales/en/pricing.json';
+import enGovernance from '../../public/locales/en/governance.json';
 // PT
 import ptCommon from '../../public/locales/pt/common.json';
 import ptCompany from '../../public/locales/pt/company.json';
@@ -44,6 +48,8 @@ import ptValidation from '../../public/locales/pt/validation.json';
 import ptNotifications from '../../public/locales/pt/notifications.json';
 import ptCreatify from '../../public/locales/pt/creatify.json';
 import ptLegal from '../../public/locales/pt/legal.json';
+import ptPricing from '../../public/locales/pt/pricing.json';
+import ptGovernance from '../../public/locales/pt/governance.json';
 export const resources = {
   es: {
     common: esCommon,
@@ -60,6 +66,8 @@ export const resources = {
     notifications: esNotifications,
     creatify: esCreatify,
     legal: esLegal,
+    pricing: esPricing,
+    governance: esGovernance,
   },
   en: {
     common: enCommon,
@@ -76,6 +84,8 @@ export const resources = {
     notifications: enNotifications,
     creatify: enCreatify,
     legal: enLegal,
+    pricing: enPricing,
+    governance: enGovernance,
   },
   pt: {
     common: ptCommon,
@@ -92,5 +102,7 @@ export const resources = {
     notifications: ptNotifications,
     creatify: ptCreatify,
     legal: ptLegal,
+    pricing: ptPricing,
+    governance: ptGovernance,
   },
 };

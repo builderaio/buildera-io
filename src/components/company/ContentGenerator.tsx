@@ -10,6 +10,7 @@ import { EraOptimizerButton } from "@/components/ui/era-optimizer-button";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
+import { parseAIServiceError, getAIErrorTranslationKey } from "@/utils/aiServiceErrors";
 import { 
   Zap, 
   Sparkles, 
@@ -117,9 +118,13 @@ const ContentGenerator = ({ profile }: ContentGeneratorProps) => {
       
       setPrompt("");
     } catch (error) {
+      console.error('Error generating content:', error);
+      const parsed = await parseAIServiceError(error);
       toast({
         title: t('errors:general.title'),
-        description: t('marketing:generator.errorGenerating'),
+        description: t(getAIErrorTranslationKey(parsed.code), {
+          defaultValue: t('marketing:generator.errorGenerating'),
+        }),
         variant: "destructive",
       });
     } finally {

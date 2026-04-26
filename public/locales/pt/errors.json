@@ -26,5 +26,14 @@
     "quotaDescription": "Você excedeu sua cota mensal de traduções. Por favor, entre em contato com o suporte.",
     "translationError": "Erro de tradução",
     "translationErrorDescription": "Não foi possível traduzir o conteúdo. Tente novamente."
+  },
+  "ai": {
+    "service_unavailable": "A geração de conteúdo com IA não está disponível no momento. Verifique seu plano ou entre em contato com o suporte.",
+    "rate_limited": "Muitas solicitações ao serviço de IA. Aguarde alguns segundos e tente novamente.",
+    "quota_exceeded": "Você excedeu sua cota de geração de conteúdo com IA. Entre em contato com o suporte para ampliá-la.",
+    "upstream_error": "O provedor de IA está com problemas. Tente novamente em alguns minutos.",
+    "network_error": "Não foi possível conectar ao serviço de IA. Verifique sua conexão com a internet.",
+    "internal_error": "Ocorreu um erro interno ao gerar o conteúdo. Tente novamente.",
+    "unknown": "Não foi possível gerar o conteúdo. Tente novamente ou entre em contato com o suporte."
   }
 }

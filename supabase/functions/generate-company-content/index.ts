@@ -21,14 +21,51 @@ serve(async (req) => {
 
   try {
     console.log('🤖 Iniciando generación de contenido con IA...');
-    
-    if (!openAIApiKey) {
-      console.error('❌ OPENAI_API_KEY no está configurada');
-      throw new Error('OPENAI_API_KEY no está configurada');
+
+    // Health-check endpoint: GET ?health=1 or body { health_check: true }
+    const url = new URL(req.url);
+    const isHealthCheckGet = req.method === 'GET' && url.searchParams.get('health') === '1';
+
+    let body: any = {};
+    if (req.method !== 'GET') {
+      try {
+        body = await req.json();
+      } catch (_) {
+        body = {};
+      }
     }
 
-    const body = await req.json();
+    if (isHealthCheckGet || body?.health_check === true) {
+      const available = !!openAIApiKey;
+      return new Response(JSON.stringify({
+        success: true,
+        service: 'generate-company-content',
+        available,
+        provider: 'openai',
+        error_code: available ? null : 'service_unavailable',
+        message: available
+          ? 'AI content generation service is operational.'
+          : 'OPENAI_API_KEY is not configured. Service unavailable.',
+      }), {
+        status: available ? 200 : 503,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    if (!openAIApiKey) {
+      console.error('❌ OPENAI_API_KEY no está configurada');
+      return new Response(JSON.stringify({
+        success: false,
+        error_code: 'service_unavailable',
+        error: 'AI content generation service is not configured (missing OPENAI_API_KEY).',
+      }), {
+        status: 503,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     console.log('📝 Datos recibidos:', body);
+
 
     // Nueva ruta: generación libre de contenido con prompt + contexto
     if (body.prompt) {
@@ -449,11 +486,39 @@ La propuesta de valor debe explicar claramente qué hace única a esta empresa y
 
   } catch (error: any) {
     console.error('❌ Error en generate-company-content:', error);
-    return new Response(JSON.stringify({ 
+
+    const message: string = error?.message || 'Internal server error';
+    let status = 500;
+    let errorCode = 'internal_error';
+
+    // Map known OpenAI HTTP signals embedded in our thrown errors
+    const m = message.match(/Error de OpenAI:\s*(\d{3})/i);
+    if (m) {
+      const upstream = parseInt(m[1], 10);
+      if (upstream === 429) {
+        status = 429;
+        errorCode = 'rate_limited';
+      } else if (upstream === 401 || upstream === 403) {
+        status = 503;
+        errorCode = 'service_unavailable';
+      } else if (upstream === 402 || /quota|insufficient/i.test(message)) {
+        status = 402;
+        errorCode = 'quota_exceeded';
+      } else if (upstream >= 500) {
+        status = 502;
+        errorCode = 'upstream_error';
+      }
+    } else if (/OPENAI_API_KEY/i.test(message)) {
+      status = 503;
+      errorCode = 'service_unavailable';
+    }
+
+    return new Response(JSON.stringify({
       success: false,
-      error: error.message || 'Error interno del servidor' 
+      error_code: errorCode,
+      error: message,
     }), {
-      status: 500,
+      status,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }

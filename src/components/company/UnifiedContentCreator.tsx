@@ -12,6 +12,7 @@ import { InsightsManager } from "./insights/InsightsManager";
 import SimpleContentPublisher from "./SimpleContentPublisher";
 import { Lightbulb, Edit3, Sparkles, Loader2, Image as ImageIcon, Video } from "lucide-react";
 import { generateAIText, generateAIImage, saveInsight, saveGeneratedContent } from "@/utils/contentGeneration";
+import { parseAIServiceError, getAIErrorTranslationKey } from "@/utils/aiServiceErrors";
 import { SmartLoader } from "@/components/ui/smart-loader";
 import ContentImageSelector from "./ContentImageSelector";
 import { UnifiedLibrary } from "./UnifiedLibrary";
@@ -26,7 +27,7 @@ interface Props {
 
 export default function UnifiedContentCreator({ profile, topPosts = [], selectedPlatform = 'general', prepopulatedContent, onContentUsed }: Props) {
   const { toast } = useToast();
-  const { t, i18n } = useTranslation();
+  const { t, i18n } = useTranslation(['translation', 'errors']);
   const [activeTab, setActiveTab] = useState<'insights' | 'create' | 'library'>('insights');
   const [createMode, setCreateMode] = useState<'ai' | 'manual'>('ai');
   
@@ -101,10 +102,13 @@ export default function UnifiedContentCreator({ profile, topPosts = [], selected
       });
     } catch (error) {
       console.error('Error generating content:', error);
-      toast({ 
-        title: t('toast.error'), 
-        description: t('toast.content.errorGenerate'), 
-        variant: "destructive" 
+      const parsed = await parseAIServiceError(error);
+      toast({
+        title: t('toast.error'),
+        description: t(getAIErrorTranslationKey(parsed.code), {
+          defaultValue: t('toast.content.errorGenerate'),
+        }),
+        variant: "destructive"
       });
     } finally {
       setIsGenerating(false);

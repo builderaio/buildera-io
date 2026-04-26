@@ -248,13 +248,21 @@ serve(async (req) => {
     // Get model compatibility
     const modelCompatibility = await getModelCompatibility(supabase, modelName);
 
-    // Get API key
+    // Get API key — if missing, use Lovable AI Gateway as fallback
     const apiKey = await getOpenAIApiKey(supabase);
-    if (!apiKey) {
+    const lovableApiKey = Deno.env.get('LOVABLE_API_KEY');
+
+    if (!apiKey && !lovableApiKey) {
       return new Response(
-        JSON.stringify({ error: 'OpenAI API key not configured' }),
+        JSON.stringify({ error: 'No AI provider configured (missing OPENAI_API_KEY and LOVABLE_API_KEY)' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
+    }
+
+    // If no OpenAI key, go straight to Lovable AI Gateway
+    if (!apiKey && lovableApiKey) {
+      console.log('[openai-responses-handler] No OPENAI_API_KEY, using Lovable AI Gateway');
+      return await callLovableGateway(lovableApiKey, modelName, systemPrompt, formatInput(input, config.instructions), temperature, config.max_output_tokens, functionName);
     }
 
     // Build tools array
